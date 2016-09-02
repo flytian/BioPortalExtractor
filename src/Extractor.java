@@ -17,10 +17,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class Extractor {
 
-	private static final String API_KEY  = "5e1b84f3-967e-4328-93e2-af78b6ba2276";
-	private static final String REST_URL = "http://data.bioontology.org";
-	private static final String IRI = "http://localhost/annotation.owl";
+	private static final String API_KEY      = "";
+	private static final String REST_URL     = "http://data.bioontology.org";
+	private static final String IRI          = "http://localhost/annotation.owl";
 	private static final ObjectMapper mapper = new ObjectMapper();
+	
     private static OntModel model;
     private static AnnotationProperty definition, synonym;
 
