@@ -5,7 +5,6 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Map;
@@ -24,34 +23,40 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class Extractor {
 
 	private static final String REST_URL     = "http://data.bioontology.org";
-	private static final String IRI          = "http://localhost/annotation.owl";
 	
 	private static ObjectMapper mapper = new ObjectMapper();
-	private static String api_key;
+	private static String api_key, iri, ontologies = "";
     private static OntModel model;
     private static AnnotationProperty definition, synonym;
+    private static String[] texts = new String[0];
 
-	@SuppressWarnings("unchecked")
-	public static void main(String[] args) throws FileNotFoundException, UnsupportedEncodingException, YamlException {
-        YamlReader reader = new YamlReader(new FileReader("settings.yml"));
-		api_key = ((Map<String, String>) reader.read()).get("api_key");
+	public static void main(String[] args) {
+		try {
+			readConfiguration();
+		} catch (Exception e) {
+			System.err.println("Error: Could not load 'settings.yml'! (" + e.getMessage() + ")");
+			System.exit(1);
+		}
 		
-		String[] texts = new String[0];
-        String ontologies = "";
-		
+		readParameters(args);
+        createOntology();
+        handleInput();
+		saveOntology();
+	}
+	
+	private static void readParameters(String[] args) {
 		if (args.length == 0 ||  args[0] == null || args[0].equals("")) {
         	System.err.println("Error: Please enter text to search for!");
-        	return;
+        	System.exit(1);
         } else {
         	texts = args[0].split("\\s*,\\s*");
         }
         
-        if (args.length > 1)
-        	ontologies = args[1];
-		
-        createOntology();
-        
-        for (String text : texts) {
+        if (args.length > 1) ontologies = args[1];
+	}
+	
+	private static void handleInput() {
+		for (String text : texts) {
         	System.out.println("\nStarting search for '" + text + "' in ontologies '" + ontologies + "'...");
 			JsonNode rootNode = jsonToNode(get(
 				REST_URL + "/annotator"
@@ -75,22 +80,27 @@ public class Extractor {
 	        	addParentsToNode(cls, leafClass);
 	        }
         }
-      
-		saveOntology(model);
+	}
+	
+	@SuppressWarnings("unchecked")
+	private static void readConfiguration() throws FileNotFoundException, YamlException {
+		YamlReader reader = new YamlReader(new FileReader("settings.yml"));
+		api_key = ((Map<String, String>) reader.read()).get("api_key");
+		iri     = ((Map<String, String>) reader.read()).get("iri");
 	}
 	
 	private static void createOntology() {
 		model = ModelFactory.createOntologyModel();
-        model.createOntology(IRI);
-        definition = model.createAnnotationProperty(IRI + "#definition");
-        synonym = model.createAnnotationProperty(IRI + "#synonym");
+        model.createOntology(iri);
+        definition = model.createAnnotationProperty(iri + "#definition");
+        synonym = model.createAnnotationProperty(iri + "#synonym");
 	}
 	
-	private static void saveOntology(OntModel model) {
+	private static void saveOntology() {
 		try {
 			File file = new File ("annotation.owl");
 			FileOutputStream stream = new FileOutputStream (file);
-			model.write(stream, "rdf/xml", IRI);
+			model.write(stream, "rdf/xml", iri);
 			System.out.println("\nSaved ontologie in '" + file.getAbsolutePath() + "'.");
 		} catch (Exception e) {
 			System.err.println("\nError: Could not save owl file. (" + e.getMessage() + ")");
