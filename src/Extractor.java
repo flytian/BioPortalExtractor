@@ -2,31 +2,41 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Map;
+
 import org.apache.jena.ontology.AnnotationProperty;
 import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntModel;
 import org.apache.jena.rdf.model.ModelFactory;
+
+import com.esotericsoftware.yamlbeans.YamlException;
+import com.esotericsoftware.yamlbeans.YamlReader;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class Extractor {
 
-	private static final String API_KEY      = "";
 	private static final String REST_URL     = "http://data.bioontology.org";
 	private static final String IRI          = "http://localhost/annotation.owl";
-	private static final ObjectMapper mapper = new ObjectMapper();
 	
+	private static ObjectMapper mapper = new ObjectMapper();
+	private static String api_key;
     private static OntModel model;
     private static AnnotationProperty definition, synonym;
 
-	public static void main(String[] args) throws FileNotFoundException, UnsupportedEncodingException {
-        String[] texts = new String[0];
+	@SuppressWarnings("unchecked")
+	public static void main(String[] args) throws FileNotFoundException, UnsupportedEncodingException, YamlException {
+        YamlReader reader = new YamlReader(new FileReader("settings.yml"));
+		api_key = ((Map<String, String>) reader.read()).get("api_key");
+		
+		String[] texts = new String[0];
         String ontologies = "";
 		
 		if (args.length == 0 ||  args[0] == null || args[0].equals("")) {
@@ -131,7 +141,7 @@ public class Extractor {
             url = new URL(urlToGet);
             conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
-            conn.setRequestProperty("Authorization", "apikey token=" + API_KEY);
+            conn.setRequestProperty("Authorization", "apikey token=" + api_key);
             conn.setRequestProperty("Accept", "application/json");
             
             boolean retry = true;
