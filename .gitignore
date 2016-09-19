@@ -1,3 +1,5 @@
 *.owl
 *.class
 catalog-*.xml
+/bin/
+/target/

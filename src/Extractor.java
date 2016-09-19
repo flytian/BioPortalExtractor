@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.jena.ontology.AnnotationProperty;
@@ -82,11 +83,12 @@ public class Extractor {
         }
 	}
 	
-	@SuppressWarnings("unchecked")
 	private static void readConfiguration() throws FileNotFoundException, YamlException {
 		YamlReader reader = new YamlReader(new FileReader("settings.yml"));
-		api_key = ((Map<String, String>) reader.read()).get("api_key");
-		iri     = ((Map<String, String>) reader.read()).get("iri");
+		@SuppressWarnings("unchecked")
+		Map<String, String> map = (Map<String, String>) reader.read();
+		api_key = map.get("api_key");
+		iri     = map.get("iri");
 	}
 	
 	private static void createOntology() {
