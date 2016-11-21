@@ -1,2 +1,3 @@
-api_key: ""
-iri: "http://localhost/annotation.owl"
+api_key: "01766580-322b-48aa-997a-9bc4462e471d"
+iri: "http://imise.uni-leipzig.de/annotation.owl#"
+path: "annotation.owl"

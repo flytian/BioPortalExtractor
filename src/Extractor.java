@@ -14,6 +14,11 @@ import org.apache.jena.ontology.AnnotationProperty;
 import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntModel;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 
 import com.esotericsoftware.yamlbeans.YamlException;
 import com.esotericsoftware.yamlbeans.YamlReader;
@@ -23,10 +28,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class Extractor {
 
-	private static final String REST_URL     = "http://data.bioontology.org";
+	private static final String REST_URL = "http://data.bioontology.org";
 	
 	private static ObjectMapper mapper = new ObjectMapper();
-	private static String api_key, iri, ontologies = "";
+	private static String api_key, iri, path, ontologies = "";
     private static OntModel model;
     private static AnnotationProperty definition, synonym;
     private static String[] texts = new String[0];
@@ -42,7 +47,7 @@ public class Extractor {
 		readParameters(args);
         createOntology();
         handleInput();
-		saveOntology();
+		saveOntology(path);
 	}
 	
 	private static void readParameters(String[] args) {
@@ -89,24 +94,35 @@ public class Extractor {
 		Map<String, String> map = (Map<String, String>) reader.read();
 		api_key = map.get("api_key");
 		iri     = map.get("iri");
+		path    = map.get("path");
 	}
 	
 	private static void createOntology() {
 		model = ModelFactory.createOntologyModel();
         model.createOntology(iri);
-        definition = model.createAnnotationProperty(iri + "#definition");
-        synonym = model.createAnnotationProperty(iri + "#synonym");
+        definition = model.createAnnotationProperty(iri + "definition");
+        synonym = model.createAnnotationProperty(iri + "synonym");
 	}
 	
-	private static void saveOntology() {
+	private static void saveOntology(String path) {
 		try {
-			File file = new File ("annotation.owl");
-			FileOutputStream stream = new FileOutputStream (file);
-			model.write(stream, "rdf/xml", iri);
+			File file = new File(path);
+			FileOutputStream stream = new FileOutputStream(file);
+			model.setNsPrefix("", iri);
+			model.write(stream, "RDF/XML", null);
+			loadAndSaveWithOwlApi(path);
 			System.out.println("\nSaved ontologie in '" + file.getAbsolutePath() + "'.");
 		} catch (Exception e) {
 			System.err.println("\nError: Could not save owl file. (" + e.getMessage() + ")");
 		}
+	}
+	
+	private static void loadAndSaveWithOwlApi(String path) throws OWLOntologyCreationException, OWLOntologyStorageException {
+		File file = new File(path);
+		OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+		OWLOntology ontology = manager.loadOntologyFromOntologyDocument(file);
+		
+		manager.saveOntology(ontology);
 	}
 	
 	private static void addParentsToNode(JsonNode node, OntClass leafClass) {
