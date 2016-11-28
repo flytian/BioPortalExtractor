@@ -1,3 +1,5 @@
 api_key: ""
 iri: "http://imise.uni-leipzig.de/annotation.owl#"
-path: "annotation.owl"
+outputPath: "annotation.owl"
+ontologies: "MESH,SNOMEDCT,NCIT"
+bioportal_url: "http://data.bioontology.org"

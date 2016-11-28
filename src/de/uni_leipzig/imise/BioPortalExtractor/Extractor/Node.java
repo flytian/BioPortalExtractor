@@ -1,4 +1,4 @@
-package de.uni_leipzig.imise;
+package de.uni_leipzig.imise.BioPortalExtractor.Extractor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,9 +6,11 @@ import java.util.List;
 import com.fasterxml.jackson.databind.JsonNode;
 
 public class Node {
+	public String ontology;
 	public String label;
 	public String id;
 	public String definition;
+	public JsonNode json;
 	public List<String> synonyms = new ArrayList<String>();
 	public List<Node> parents = new ArrayList<Node>();
 	
@@ -17,6 +19,7 @@ public class Node {
 	}
 	
 	public Node(JsonNode json) {
+		ontology = json.get("links").get("ontology").asText();
 		label = json.get("prefLabel").asText();
     	id = json.get("@id").asText();
     	
@@ -28,7 +31,7 @@ public class Node {
     		definition = json.get("definition").get(0).asText();
 	}
 	
-	public String toString() {
+	public String toXML() {
 		String string
 			= "<node>"
 			+ "<id>" + id + "</id>"
@@ -55,4 +58,21 @@ public class Node {
 		return string;
 	}
 	
+	public String toString() {
+		return label + " [" + ontology.replaceAll(".*/", "") + "]";
+	}
+	
+	public String getTooltip() {
+		String tooltip
+			= "<html>"
+			+ "ID: " + id + "<br>"
+			+ "Definition: " + (definition != null ? definition : "-") + "<br>"
+			+ "Synonyms:";
+		
+		for (String synonym : synonyms) {
+			tooltip += "<br>" + synonym;
+		}
+		
+		return tooltip + "</html>";
+	}
 }

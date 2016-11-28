@@ -1,4 +1,4 @@
-package de.uni_leipzig.imise;
+package de.uni_leipzig.imise.BioPortalExtractor.Extractor;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -7,8 +7,11 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.Map;
 
 import org.apache.jena.ontology.AnnotationProperty;
@@ -28,114 +31,112 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class Extractor {
-
-	private static final String REST_URL = "http://data.bioontology.org";
 	
-	private static ObjectMapper mapper = new ObjectMapper();
-	private static String api_key, iri, path, ontologies = "";
-    private static OntModel model;
-    private static AnnotationProperty definition, synonym;
-    private static String[] texts = new String[0];
+	private ObjectMapper mapper = new ObjectMapper();
+	private String api_key, iri, outputPath, ontologies, rest_url;
+    private OntModel model;
+    private AnnotationProperty definition, synonym, origin;
+    
 
-	public static void main(String[] args) {
-		try {
+    public Extractor() {
+    	try {
 			readConfiguration();
 		} catch (Exception e) {
 			System.err.println("Error: Could not load 'settings.yml'! (" + e.getMessage() + ")");
 			System.exit(1);
 		}
-		
-		readParameters(args);
-        createOntology();
-        handleInput();
-		saveOntology(path);
-	}
+    	
+    	createOntology();
+    }
 	
-	private static void readParameters(String[] args) {
-		if (args.length == 0 ||  args[0] == null || args[0].equals("")) {
-        	System.err.println("Error: Please enter text to search for!");
-        	System.exit(1);
-        } else {
-        	texts = args[0].split("\\s*,\\s*");
-        }
-        
-        if (args.length > 1) ontologies = args[1];
-	}
-	
-	private static void handleInput() {
-		for (String text : texts) {
-        	System.out.println("\nStarting search for '" + text + "' in ontologies '" + ontologies + "'...");
-			JsonNode rootNode = jsonToNode(get(
-				REST_URL + "/annotator"
-				+ "?text=" + text
-				+ "&ontologies=" + ontologies
-			));
-	        
-			for (JsonNode node : rootNode) {
-	        	JsonNode cls = jsonToNode(get(node.get("annotatedClass").get("links").get("self").asText()));
-	        	Node leaf = new Node(cls);
-	        	
-	        	if (leaf.label == null || leaf.label.equals(""))
-	        		continue;
-	
-	        	String source = jsonToNode(
-	        		get(node.get("annotatedClass").get("links").get("ontology").asText())
-	        	).get("acronym").asText();
-	        	System.out.println("Found class: '" + leaf.label + "' in '" + source + "'.");
-	        	
-	        	OntClass leafClass = createClass(leaf);
-	        	addParentsToNode(cls, leafClass);
-	        }
-        }
-	}
-	
-	private static void readConfiguration() throws FileNotFoundException, YamlException {
-		YamlReader reader = new YamlReader(new FileReader("settings.yml"));
-		@SuppressWarnings("unchecked")
-		Map<String, String> map = (Map<String, String>) reader.read();
-		api_key = map.get("api_key");
-		iri     = map.get("iri");
-		path    = map.get("path");
-	}
-	
-	private static void createOntology() {
-		model = ModelFactory.createOntologyModel();
-        model.createOntology(iri);
-        definition = model.createAnnotationProperty(iri + "definition");
-        synonym = model.createAnnotationProperty(iri + "synonym");
-	}
-	
-	private static void saveOntology(String path) {
+	public void saveOntology() {
 		try {
-			File file = new File(path);
+			File file = new File(outputPath);
 			FileOutputStream stream = new FileOutputStream(file);
 			model.setNsPrefix("", iri);
 			model.write(stream, "RDF/XML", null);
-			loadAndSaveWithOwlApi(path);
+			loadAndSaveWithOwlApi();
 			System.out.println("\nSaved ontologie in '" + file.getAbsolutePath() + "'.");
 		} catch (Exception e) {
 			System.err.println("\nError: Could not save owl file. (" + e.getMessage() + ")");
 		}
 	}
 	
-	private static void loadAndSaveWithOwlApi(String path) throws OWLOntologyCreationException, OWLOntologyStorageException {
-		File file = new File(path);
+	public ArrayList<Node> extract(String text) {
+		if (text == null || text.equals(""))
+			return null;
+		
+        System.out.println("\nStarting search for '" + text + "' in ontologies '" + ontologies + "'...");
+        
+        try {
+			text = URLEncoder.encode(text, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
+        
+		JsonNode rootNode = jsonToNode(get(
+			rest_url + "/annotator"
+			+ "?text=" + text
+			+ "&ontologies=" + ontologies
+		));
+	    
+		ArrayList<Node> nodes = new ArrayList<Node>();
+		for (JsonNode node : rootNode) {
+	        JsonNode cls = jsonToNode(get(node.get("annotatedClass").get("links").get("self").asText()));
+	        Node leaf = new Node(cls);
+	        leaf.json = cls;
+	        	
+	        if (leaf.label == null || leaf.label.equals(""))
+	        	continue;
+	
+	        String source = jsonToNode(
+	        	get(node.get("annotatedClass").get("links").get("ontology").asText())
+	        ).get("acronym").asText();
+	        System.out.println("Found class: '" + leaf.label + "' in '" + source + "'.");
+	        
+	        nodes.add(leaf);
+	    }
+		
+		return nodes;
+	}
+	
+	private void readConfiguration() throws FileNotFoundException, YamlException {
+		YamlReader reader = new YamlReader(new FileReader("settings.yml"));
+		@SuppressWarnings("unchecked")
+		Map<String, String> map = (Map<String, String>) reader.read();
+		api_key    = map.get("api_key");
+		iri        = map.get("iri");
+		outputPath = map.get("outputPath");
+		ontologies = map.get("ontologies");
+		rest_url   = map.get("bioportal_url");
+	}
+	
+	private void createOntology() {
+		model = ModelFactory.createOntologyModel();
+        model.createOntology(iri);
+        definition = model.createAnnotationProperty(iri + "definition");
+        synonym    = model.createAnnotationProperty(iri + "synonym");
+        origin     = model.createAnnotationProperty(iri + "origin");
+	}
+	
+	private void loadAndSaveWithOwlApi() throws OWLOntologyCreationException, OWLOntologyStorageException {
+		File file = new File(outputPath);
 		OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
 		OWLOntology ontology = manager.loadOntologyFromOntologyDocument(file);
 		
 		manager.saveOntology(ontology);
 	}
 	
-	private static void addParentsToNode(JsonNode node, OntClass leafClass) {
-		for (JsonNode parent : jsonToNode(get(node.get("links").get("parents").asText()))) {
-			OntClass parentClass = createClass(new Node(parent));
-			leafClass.addSuperClass(parentClass);
+	public void addParentsToNode(JsonNode json, OntClass cls) {
+		for (JsonNode parentJson : jsonToNode(get(json.get("links").get("parents").asText()))) {
+			OntClass parentClass = createClass(new Node(parentJson));
+			cls.addSuperClass(parentClass);
 			
-			addParentsToNode(parent, parentClass);
+			addParentsToNode(parentJson, parentClass);
 		}
 	}
 	
-	private static OntClass createClass(Node node) {
+	public OntClass createClass(Node node) {
 		OntClass cls = model.createClass(node.id);
 		cls.addLabel(node.label, "en");
     	
@@ -148,7 +149,7 @@ public class Extractor {
     	return cls;
 	}
 
-	private static JsonNode jsonToNode(String json) {
+	private JsonNode jsonToNode(String json) {
         JsonNode root = null;
         try {
             root = mapper.readTree(json);
@@ -160,7 +161,7 @@ public class Extractor {
         return root;
     }
 
-    private static String get(String urlToGet) {
+    private String get(String urlToGet) {
         URL url;
         HttpURLConnection conn;
         BufferedReader rd = null;
@@ -194,5 +195,9 @@ public class Extractor {
             e.printStackTrace();
         }
         return result;
+    }
+
+    public void addOrigin(OntClass cls, String text) {
+    	cls.addProperty(origin, text);
     }
 }
