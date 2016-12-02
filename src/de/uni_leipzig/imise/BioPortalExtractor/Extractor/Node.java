@@ -14,8 +14,11 @@ public class Node {
 	public List<String> synonyms = new ArrayList<String>();
 	public List<Node> parents = new ArrayList<Node>();
 	
-	public Node() {
-		super();
+	public Node() {}
+	
+	public Node(String id, String label)  {
+		this.id    = id;
+		this.label = label;
 	}
 	
 	public Node(JsonNode json) {
@@ -59,7 +62,11 @@ public class Node {
 	}
 	
 	public String toString() {
-		return label + " [" + ontology.replaceAll(".*/", "") + "]";
+		String string = label;
+		if (ontology != null)
+			string += " [" + ontology.replaceAll(".*/", "") + "]";
+		
+		return string;
 	}
 	
 	public String getTooltip() {

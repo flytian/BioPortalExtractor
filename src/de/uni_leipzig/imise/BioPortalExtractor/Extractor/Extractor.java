@@ -14,10 +14,13 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Map;
 
+import javax.swing.tree.DefaultMutableTreeNode;
+
 import org.apache.jena.ontology.AnnotationProperty;
 import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntModel;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.util.FileManager;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
@@ -29,6 +32,7 @@ import com.esotericsoftware.yamlbeans.YamlReader;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Lists;
 
 public class Extractor {
 	
@@ -36,6 +40,7 @@ public class Extractor {
 	private String api_key, iri, outputPath, ontologies, rest_url;
     private OntModel model;
     private AnnotationProperty definition, synonym, origin;
+	private OntClass ignored;
     
 
     public Extractor() {
@@ -49,17 +54,13 @@ public class Extractor {
     	createOntology();
     }
 	
-	public void saveOntology() {
-		try {
-			File file = new File(outputPath);
-			FileOutputStream stream = new FileOutputStream(file);
-			model.setNsPrefix("", iri);
-			model.write(stream, "RDF/XML", null);
-			loadAndSaveWithOwlApi();
-			System.out.println("\nSaved ontologie in '" + file.getAbsolutePath() + "'.");
-		} catch (Exception e) {
-			System.err.println("\nError: Could not save owl file. (" + e.getMessage() + ")");
-		}
+	public void saveOntology() throws OWLOntologyCreationException, OWLOntologyStorageException, FileNotFoundException {
+		File file = new File(outputPath);
+		FileOutputStream stream = new FileOutputStream(file);
+		model.setNsPrefix("", iri);
+		model.write(stream, "RDF/XML", null);
+		loadAndSaveWithOwlApi();
+		System.out.println("\nSaved ontologie in '" + file.getAbsolutePath() + "'.");
 	}
 	
 	public ArrayList<Node> extract(String text) {
@@ -100,33 +101,10 @@ public class Extractor {
 		return nodes;
 	}
 	
-	private void readConfiguration() throws FileNotFoundException, YamlException {
-		YamlReader reader = new YamlReader(new FileReader("settings.yml"));
-		@SuppressWarnings("unchecked")
-		Map<String, String> map = (Map<String, String>) reader.read();
-		api_key    = map.get("api_key");
-		iri        = map.get("iri");
-		outputPath = map.get("outputPath");
-		ontologies = map.get("ontologies");
-		rest_url   = map.get("bioportal_url");
+	public void addOrigin(OntClass cls, String text) {
+	  	cls.addProperty(origin, text);
 	}
-	
-	private void createOntology() {
-		model = ModelFactory.createOntologyModel();
-        model.createOntology(iri);
-        definition = model.createAnnotationProperty(iri + "definition");
-        synonym    = model.createAnnotationProperty(iri + "synonym");
-        origin     = model.createAnnotationProperty(iri + "origin");
-	}
-	
-	private void loadAndSaveWithOwlApi() throws OWLOntologyCreationException, OWLOntologyStorageException {
-		File file = new File(outputPath);
-		OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
-		OWLOntology ontology = manager.loadOntologyFromOntologyDocument(file);
-		
-		manager.saveOntology(ontology);
-	}
-	
+	 
 	public void addParentsToNode(JsonNode json, OntClass cls) {
 		for (JsonNode parentJson : jsonToNode(get(json.get("links").get("parents").asText()))) {
 			OntClass parentClass = createClass(new Node(parentJson));
@@ -149,6 +127,22 @@ public class Extractor {
     	return cls;
 	}
 
+	public Boolean isAnnotated(String origin) {
+		for (OntClass cls : Lists.newArrayList(model.listClasses())) {
+			if (cls.hasLiteral(this.origin, origin))
+				return true;
+		}
+		return false;
+	}
+	
+	public OntClass getAnnotatedClass(String origin) {
+		for (OntClass cls : Lists.newArrayList(model.listClasses())) {
+			if (cls.hasLiteral(this.origin, origin))
+				return cls;
+		}
+		return null;
+	}
+	
 	private JsonNode jsonToNode(String json) {
         JsonNode root = null;
         try {
@@ -160,8 +154,53 @@ public class Extractor {
         }
         return root;
     }
-
-    private String get(String urlToGet) {
+	
+	private void readConfiguration() throws FileNotFoundException, YamlException {
+		YamlReader reader = new YamlReader(new FileReader("settings.yml"));
+		@SuppressWarnings("unchecked")
+		Map<String, String> map = (Map<String, String>) reader.read();
+		api_key    = map.get("api_key");
+		iri        = map.get("iri");
+		outputPath = map.get("outputPath");
+		ontologies = map.get("ontologies");
+		rest_url   = map.get("bioportal_url");
+	}
+	
+	
+	private void createOntology() {
+		model = ModelFactory.createOntologyModel();
+		
+		if (new File(outputPath).exists()) {
+			System.out.println("Appending data to existing output file.");
+			model.read(FileManager.get().open(outputPath), null);
+		} else {
+			model.createOntology(iri);
+		}
+		
+        definition = model.createAnnotationProperty(iri + "definition");
+        synonym    = model.createAnnotationProperty(iri + "synonym");
+        origin     = model.createAnnotationProperty(iri + "origin");
+        ignored    = model.createClass(iri + "ignored");
+        ignored.setLabel("Ignored", "en");
+	}
+	
+	public void ignoreClass(Node node) {
+		OntClass cls = model.createClass(iri + node.id);
+		cls.setLabel(node.label, "en");
+		addOrigin(cls, node.id);
+		
+		cls.addSuperClass(ignored);
+	}
+	
+	private void loadAndSaveWithOwlApi() throws OWLOntologyCreationException, OWLOntologyStorageException {
+		File file = new File(outputPath);
+		OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+		OWLOntology ontology = manager.loadOntologyFromOntologyDocument(file);
+		
+		manager.saveOntology(ontology);
+	}	
+    
+	private String get(String urlToGet) {
         URL url;
         HttpURLConnection conn;
         BufferedReader rd = null;
@@ -196,8 +235,23 @@ public class Extractor {
         }
         return result;
     }
-
-    public void addOrigin(OntClass cls, String text) {
-    	cls.addProperty(origin, text);
+    
+    public DefaultMutableTreeNode getTreeNodeForClass(OntClass cls) {
+    	DefaultMutableTreeNode node;
+    	ArrayList<OntClass> classes;
+    	
+    	if (cls == null) {
+    		node = new DefaultMutableTreeNode("Things");
+    		classes = Lists.newArrayList(model.listHierarchyRootClasses());
+    	} else {
+    		node = new DefaultMutableTreeNode(cls.getLabel("en"));
+    		classes = Lists.newArrayList(cls.listSubClasses());
+    	}
+    	
+    	for (OntClass child : classes) {
+    		node.add(getTreeNodeForClass(child));
+    	}
+    	
+    	return node;
     }
 }
