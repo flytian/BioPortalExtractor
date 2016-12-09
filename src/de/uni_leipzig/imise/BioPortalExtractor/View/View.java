@@ -12,11 +12,9 @@ import org.apache.jena.ontology.OntClass;
 import de.uni_leipzig.imise.BioPortalExtractor.Extractor.Extractor;
 import de.uni_leipzig.imise.BioPortalExtractor.Extractor.Node;
 import de.uni_leipzig.imise.BioPortalExtractor.LIFEOntologyParser.LIFEItem;
-import de.uni_leipzig.imise.BioPortalExtractor.LIFEOntologyParser.LIFEItemList;
 import de.uni_leipzig.imise.BioPortalExtractor.LIFEOntologyParser.Parser;
 
 import javax.swing.JLabel;
-import javax.swing.JList;
 import javax.swing.JOptionPane;
 import java.awt.GridLayout;
 import javax.swing.DefaultListModel;
@@ -171,6 +169,7 @@ public class View extends JFrame {
 		lifeItemList = new LIFEItemList();
 		lifeItemList.addMouseListener(new LifeItemsListMouseListener());
 		JScrollPane lifeItemsScrollPane = new JScrollPane(lifeItemList);
+		
 		lifeItemsFrame.getContentPane().add(lifeItemsScrollPane);
 		lifeItemsFrame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 		lifeItemsFrame.setVisible(false);
@@ -180,8 +179,10 @@ public class View extends JFrame {
 		lblCurrentItem.setText("");
 		txtTranslation.setText("");
 		list.setModel(new DefaultListModel<Node>());
-		lifeItemList.setModel(getLIFEItemsListModel());
-		ontologyTree.setModel(new DefaultTreeModel(extractor.getTreeNodeForClass(null)));
+		if (lifeItemsFrame.isVisible()) 
+			lifeItemList.setModel(getLIFEItemsListModel());
+		if (ontologyFrame.isVisible())
+			ontologyTree.setModel(new DefaultTreeModel(extractor.getTreeNodeForClass(null)));
 		lblCurrentItem.setText(parser.current().getDescription());
 	}
 	

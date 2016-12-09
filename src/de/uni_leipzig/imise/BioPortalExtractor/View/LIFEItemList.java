@@ -1,10 +1,12 @@
-package de.uni_leipzig.imise.BioPortalExtractor.LIFEOntologyParser;
+package de.uni_leipzig.imise.BioPortalExtractor.View;
 
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 
 import javax.swing.JList;
 import javax.swing.ListModel;
+
+import de.uni_leipzig.imise.BioPortalExtractor.LIFEOntologyParser.LIFEItem;
 
 public class LIFEItemList extends JList<LIFEItem> {
 	private static final long serialVersionUID = 3456447653090821395L;
