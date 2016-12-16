@@ -7,12 +7,15 @@ import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.tree.DefaultTreeModel;
-import org.apache.jena.ontology.OntClass;
 
+import org.apache.commons.io.FilenameUtils;
+import org.apache.jena.ontology.OntClass;
 import de.uni_leipzig.imise.BioPortalExtractor.Extractor.Extractor;
 import de.uni_leipzig.imise.BioPortalExtractor.Extractor.Node;
-import de.uni_leipzig.imise.BioPortalExtractor.LIFEOntologyParser.LIFEItem;
-import de.uni_leipzig.imise.BioPortalExtractor.LIFEOntologyParser.Parser;
+import de.uni_leipzig.imise.BioPortalExtractor.OntologyParser.LifeOntologyParser.LifeItem;
+import de.uni_leipzig.imise.BioPortalExtractor.OntologyParser.LifeOntologyParser.LifeOntologyParser;
+import de.uni_leipzig.imise.BioPortalExtractor.OntologyParser.LifeOntologyParser.LifeOwlParser;
+import de.uni_leipzig.imise.BioPortalExtractor.OntologyParser.LifeOntologyParser.LifePprjParser;
 
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -24,6 +27,7 @@ import javax.swing.JFileChooser;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.io.File;
 import java.awt.event.ActionEvent;
 import javax.swing.JTextArea;
 import javax.swing.JTree;
@@ -35,7 +39,7 @@ import javax.swing.border.TitledBorder;
 public class View extends JFrame {
 	
 	private static final long serialVersionUID = -8815936031219372775L;
-	private static Parser parser;
+	private static LifeOntologyParser parser;
 	private static Extractor extractor;
 	
 	private JPanel contentPane;
@@ -63,14 +67,22 @@ public class View extends JFrame {
 		});
 	}
 
-	public View() {
+	public View() throws Exception {
 		JFileChooser fileChooser = new JFileChooser();
-		fileChooser.setFileFilter(new FileNameExtensionFilter("pprj", "pprj"));
+		fileChooser.setFileFilter(new FileNameExtensionFilter("Ontology", "pprj,owl".split(",")));
 		if (fileChooser.showOpenDialog(new JFrame()) != JFileChooser.APPROVE_OPTION)
 			System.exit(0);
 		
 		extractor = new Extractor();
-		parser    = new Parser(fileChooser.getSelectedFile().getAbsolutePath());
+		
+		File file = fileChooser.getSelectedFile();
+		if (FilenameUtils.getExtension(file.getName()).equals("pprj")) {
+			parser = new LifePprjParser(file.getAbsolutePath());
+		} else if (FilenameUtils.getExtension(file.getName()).equals("owl")) {
+			parser = new LifeOwlParser(file.getAbsolutePath());
+		} else {
+			System.exit(0);
+		}
 		
 		setTitle("BioPortalExtractor");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -198,10 +210,10 @@ public class View extends JFrame {
 		return text;
 	}
 	
-	private DefaultListModel<LIFEItem> getLIFEItemsListModel() {
-		DefaultListModel<LIFEItem> model = new DefaultListModel<LIFEItem>();
-		for (LIFEItem item : parser.getItems()) {
-			LIFEItem copy = item.clone();
+	private DefaultListModel<LifeItem> getLIFEItemsListModel() {
+		DefaultListModel<LifeItem> model = new DefaultListModel<LifeItem>();
+		for (LifeItem item : parser.getItems()) {
+			LifeItem copy = item.clone();
 			OntClass cls = extractor.getAnnotatedClass(item.getId());
 			if (cls != null) {
 				if (cls.getLocalName().equals(copy.getId()))
@@ -312,7 +324,7 @@ public class View extends JFrame {
 	private class LifeItemsListMouseListener implements MouseListener {
 		public void mouseClicked(MouseEvent e) {
 			if (e.getClickCount() == 2) {
-				LIFEItem item = lifeItemList.getSelectedValue();
+				LifeItem item = lifeItemList.getSelectedValue();
 				parser.goTo(item);
 				reset();
 			}

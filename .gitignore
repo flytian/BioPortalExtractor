@@ -1,5 +1,8 @@
 *.owl
 *.class
+*.log
+*.csv
+*.lck
 catalog-*.xml
 /bin/
 /target/
