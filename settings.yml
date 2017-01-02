@@ -1,4 +1,4 @@
-api_key: "01766580-322b-48aa-997a-9bc4462e471d"
+api_key: ""
 iri: "http://imise.uni-leipzig.de/annotation.owl#"
 outputPath: "annotation.owl"
 ontologies: "MESH,SNOMEDCT,NCIT"
