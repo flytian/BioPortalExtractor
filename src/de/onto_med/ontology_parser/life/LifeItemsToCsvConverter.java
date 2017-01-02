@@ -1,10 +1,8 @@
-package de.uni_leipzig.imise.BioPortalExtractor.Extractor;
+package de.onto_med.ontology_parser.life;
 
 import java.io.PrintWriter;
-import de.uni_leipzig.imise.BioPortalExtractor.OntologyParser.LifeOntologyParser.LifeItem;
-import de.uni_leipzig.imise.BioPortalExtractor.OntologyParser.LifeOntologyParser.LifePprjParser;
 
-public class LifeItemsToCsvExtractor {
+public class LifeItemsToCsvConverter {
 	
 	public static void main(String[] args) {
 		LifePprjParser parser = new LifePprjParser("H:/LIFE-Metadaten/life.pprj");

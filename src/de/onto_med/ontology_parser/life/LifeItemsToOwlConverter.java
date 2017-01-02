@@ -1,4 +1,4 @@
-package de.uni_leipzig.imise.BioPortalExtractor.Extractor;
+package de.onto_med.ontology_parser.life;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -15,11 +15,9 @@ import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 
-import de.uni_leipzig.imise.BioPortalExtractor.Translator;
-import de.uni_leipzig.imise.BioPortalExtractor.OntologyParser.LifeOntologyParser.LifeItem;
-import de.uni_leipzig.imise.BioPortalExtractor.OntologyParser.LifeOntologyParser.LifePprjParser;
+import de.onto_med.Translator;
 
-public class LifeItemsToOwlExtractor {
+public class LifeItemsToOwlConverter {
 
 	private static String iri = "http://imise.uni-leipzig.de/life#";
 	private static int maxItems = 50;

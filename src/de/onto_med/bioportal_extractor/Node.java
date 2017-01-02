@@ -1,4 +1,4 @@
-package de.uni_leipzig.imise.BioPortalExtractor.Extractor;
+package de.onto_med.bioportal_extractor;
 
 import java.util.ArrayList;
 import java.util.List;

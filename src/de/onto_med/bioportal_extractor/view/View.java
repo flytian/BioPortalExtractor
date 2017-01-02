@@ -1,4 +1,4 @@
-package de.uni_leipzig.imise.BioPortalExtractor.View;
+package de.onto_med.bioportal_extractor.view;
 
 import java.awt.BorderLayout;
 import java.awt.EventQueue;
@@ -12,12 +12,13 @@ import javax.swing.tree.DefaultTreeModel;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.jena.ontology.OntClass;
-import de.uni_leipzig.imise.BioPortalExtractor.Extractor.Extractor;
-import de.uni_leipzig.imise.BioPortalExtractor.Extractor.Node;
-import de.uni_leipzig.imise.BioPortalExtractor.OntologyParser.LifeOntologyParser.LifeItem;
-import de.uni_leipzig.imise.BioPortalExtractor.OntologyParser.LifeOntologyParser.LifeOntologyParser;
-import de.uni_leipzig.imise.BioPortalExtractor.OntologyParser.LifeOntologyParser.LifeOwlParser;
-import de.uni_leipzig.imise.BioPortalExtractor.OntologyParser.LifeOntologyParser.LifePprjParser;
+
+import de.onto_med.bioportal_extractor.Extractor;
+import de.onto_med.bioportal_extractor.Node;
+import de.onto_med.ontology_parser.life.LifeItem;
+import de.onto_med.ontology_parser.life.LifeOntologyParser;
+import de.onto_med.ontology_parser.life.LifeOwlParser;
+import de.onto_med.ontology_parser.life.LifePprjParser;
 
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -54,7 +55,7 @@ public class View extends JFrame {
 	private JFrame ontologyFrame;
 	private JTree ontologyTree;
 	private JFrame lifeItemsFrame;
-	private LIFEItemList lifeItemList;
+	private LifeItemList lifeItemList;
 
 	public static void main(String[] args) throws ClassNotFoundException, InstantiationException, IllegalAccessException, UnsupportedLookAndFeelException {
 		UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
@@ -182,7 +183,7 @@ public class View extends JFrame {
 		lifeItemsFrame = new JFrame("LIFE Items");
 		lifeItemsFrame.setBounds(1060, 100, 480, 600);
 		
-		lifeItemList = new LIFEItemList();
+		lifeItemList = new LifeItemList();
 		lifeItemList.addMouseListener(new LifeItemsListMouseListener());
 		JScrollPane lifeItemsScrollPane = new JScrollPane(lifeItemList);
 		

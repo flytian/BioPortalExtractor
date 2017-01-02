@@ -1,4 +1,4 @@
-package de.uni_leipzig.imise.BioPortalExtractor.OntologyParser.LifeOntologyParser;
+package de.onto_med.ontology_parser.life;
 
 public class LifeItem {
 	private String id;

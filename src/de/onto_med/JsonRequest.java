@@ -1,4 +1,4 @@
-package de.uni_leipzig.imise.BioPortalExtractor;
+package de.onto_med;
 
 import java.io.BufferedReader;
 import java.io.IOException;

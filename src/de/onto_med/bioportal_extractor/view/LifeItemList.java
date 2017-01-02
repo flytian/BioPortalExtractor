@@ -1,4 +1,4 @@
-package de.uni_leipzig.imise.BioPortalExtractor.View;
+package de.onto_med.bioportal_extractor.view;
 
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
@@ -6,18 +6,18 @@ import java.awt.event.MouseMotionAdapter;
 import javax.swing.JList;
 import javax.swing.ListModel;
 
-import de.uni_leipzig.imise.BioPortalExtractor.OntologyParser.LifeOntologyParser.LifeItem;
+import de.onto_med.ontology_parser.life.LifeItem;
 
-public class LIFEItemList extends JList<LifeItem> {
+public class LifeItemList extends JList<LifeItem> {
 	private static final long serialVersionUID = 3456447653090821395L;
 
-	public LIFEItemList() {
+	public LifeItemList() {
         super();
         
         addMouseMotionListener(new MouseMotionAdapter() {
             @Override
             public void mouseMoved(MouseEvent e) {
-                LIFEItemList list = (LIFEItemList) e.getSource();
+                LifeItemList list = (LifeItemList) e.getSource();
                 ListModel<LifeItem> model = list.getModel();
                 int index = list.locationToIndex(e.getPoint());
                 if (index > -1) {

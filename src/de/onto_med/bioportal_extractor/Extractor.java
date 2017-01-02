@@ -1,4 +1,4 @@
-package de.uni_leipzig.imise.BioPortalExtractor.Extractor;
+package de.onto_med.bioportal_extractor;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -27,7 +27,7 @@ import com.esotericsoftware.yamlbeans.YamlReader;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.Lists;
 
-import de.uni_leipzig.imise.BioPortalExtractor.JsonRequest;
+import de.onto_med.JsonRequest;
 
 public class Extractor {
 	

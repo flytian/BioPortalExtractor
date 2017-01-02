@@ -1,4 +1,4 @@
-package de.uni_leipzig.imise.BioPortalExtractor.View;
+package de.onto_med.bioportal_extractor.view;
 
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
@@ -7,7 +7,7 @@ import javax.swing.JList;
 import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
 
-import de.uni_leipzig.imise.BioPortalExtractor.Extractor.Node;
+import de.onto_med.bioportal_extractor.Node;
 
 @SuppressWarnings("rawtypes")
 public class NodeList extends JList<Node> {
