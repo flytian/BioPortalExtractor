@@ -1,4 +1,4 @@
-package Scripts;
+package de.uni_leipzig.imise.BioPortalExtractor.Extractor;
 
 import java.io.BufferedOutputStream;
 import java.io.File;

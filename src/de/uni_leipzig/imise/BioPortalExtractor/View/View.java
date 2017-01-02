@@ -1,9 +1,11 @@
 package de.uni_leipzig.imise.BioPortalExtractor.View;
 
+import java.awt.BorderLayout;
 import java.awt.EventQueue;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 import javax.swing.border.EmptyBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.tree.DefaultTreeModel;
@@ -22,6 +24,7 @@ import javax.swing.JOptionPane;
 import java.awt.GridLayout;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 
 import java.awt.event.ActionListener;
@@ -31,6 +34,7 @@ import java.io.File;
 import java.awt.event.ActionEvent;
 import javax.swing.JTextArea;
 import javax.swing.JTree;
+import javax.swing.SwingWorker;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.JScrollPane;
@@ -267,19 +271,46 @@ public class View extends JFrame {
 	private class ExtractClassesActionListener implements ActionListener {
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		public void actionPerformed(ActionEvent e) {
-			String text = getSearchString();
+			final JDialog dlgProgress = new JDialog(new JFrame(), "Please wait...", true);
+			JProgressBar pbProgress = new JProgressBar(0, 100);
+			pbProgress.setIndeterminate(true);
 			
-			if (text == null || text.equals("")) {
-				JOptionPane.showMessageDialog(new JFrame(), "No LIFE item to search for!");
-				return;
-			}
+			dlgProgress.add(BorderLayout.CENTER, pbProgress);
+			dlgProgress.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+			dlgProgress.setSize(300, 60);
+			dlgProgress.setBounds(200, 300, 300, 60);
 			
-			DefaultListModel model = new DefaultListModel();
-			for (Node node : extractor.extract(text)) {
-				model.addElement(node);
-			}
+			SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+				@Override
+				protected Void doInBackground() throws Exception {
+					String text = getSearchString();
+					
+					if (text == null || text.equals("")) {
+						JOptionPane.showMessageDialog(new JFrame(), "No LIFE item to search for!");
+						return null;
+					}
+					
+					DefaultListModel model = new DefaultListModel();
+					for (Node node : extractor.extract(text)) {
+						model.addElement(node);
+					}
+					
+					list.setModel(model);
+					return null;
+				}
+				
+				@Override
+				protected void done() {
+					dlgProgress.dispose();
+				}
+			};
 			
-			list.setModel(model);
+			worker.execute();
+			dlgProgress.setVisible(true);
+			
+			
+			
+			/* hide dialog */
 			validate();
 		}
 	}

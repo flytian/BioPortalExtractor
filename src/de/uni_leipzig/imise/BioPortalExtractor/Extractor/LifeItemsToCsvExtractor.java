@@ -1,4 +1,4 @@
-package Scripts;
+package de.uni_leipzig.imise.BioPortalExtractor.Extractor;
 
 import java.io.PrintWriter;
 import de.uni_leipzig.imise.BioPortalExtractor.OntologyParser.LifeOntologyParser.LifeItem;
