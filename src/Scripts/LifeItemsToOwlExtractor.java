@@ -15,12 +15,15 @@ import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 
+import de.uni_leipzig.imise.BioPortalExtractor.Translator;
 import de.uni_leipzig.imise.BioPortalExtractor.OntologyParser.LifeOntologyParser.LifeItem;
 import de.uni_leipzig.imise.BioPortalExtractor.OntologyParser.LifeOntologyParser.LifePprjParser;
 
 public class LifeItemsToOwlExtractor {
 
 	private static String iri = "http://imise.uni-leipzig.de/life#";
+	private static int maxItems = 50;
+	
 	
 	public static void main(String[] args) {
 		LifePprjParser parser = new LifePprjParser("H:/LIFE-Metadaten/life.pprj");
@@ -35,13 +38,17 @@ public class LifeItemsToOwlExtractor {
 			e1.printStackTrace();
 		}
 		
+		int counter = 0;
 		for (LifeItem item : parser.getItems()) {
+			counter++;
+			if (counter > maxItems) break;
+			
 			if (item.getDescription().split(" +").length > 5) continue;
 			
 			OWLDataPropertyAssertionAxiom axiom = factory.getOWLDataPropertyAssertionAxiom(
 				description,
 				factory.getOWLNamedIndividual(IRI.create(iri + item.getId())),
-				item.getDescription()
+				Translator.translate(item.getDescription())
 			);
 			manager.applyChange(new AddAxiom(ontology, axiom));
 		}
@@ -55,4 +62,5 @@ public class LifeItemsToOwlExtractor {
 			e.printStackTrace();
 		}
 	}
+	
 }

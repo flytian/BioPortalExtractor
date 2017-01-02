@@ -1,15 +1,10 @@
 package de.uni_leipzig.imise.BioPortalExtractor.Extractor;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Map;
@@ -29,14 +24,13 @@ import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 
 import com.esotericsoftware.yamlbeans.YamlException;
 import com.esotericsoftware.yamlbeans.YamlReader;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
+
+import de.uni_leipzig.imise.BioPortalExtractor.JsonRequest;
 
 public class Extractor {
 	
-	private ObjectMapper mapper = new ObjectMapper();
 	private String api_key, iri, outputPath, ontologies, rest_url;
     private OntModel model;
     private AnnotationProperty definition, synonym, origin;
@@ -75,24 +69,25 @@ public class Extractor {
 			e.printStackTrace();
 		}
         
-		JsonNode rootNode = jsonToNode(get(
+		JsonNode rootNode = JsonRequest.get(
 			rest_url + "/annotator"
 			+ "?text=" + text
-			+ "&ontologies=" + ontologies
-		));
+			+ "&ontologies=" + ontologies,
+			api_key
+		);
 	    
 		ArrayList<Node> nodes = new ArrayList<Node>();
 		for (JsonNode node : rootNode) {
-	        JsonNode cls = jsonToNode(get(node.get("annotatedClass").get("links").get("self").asText()));
+	        JsonNode cls = JsonRequest.get(node.get("annotatedClass").get("links").get("self").asText(), api_key);
 	        Node leaf = new Node(cls);
 	        leaf.json = cls;
 	        	
 	        if (leaf.label == null || leaf.label.equals(""))
 	        	continue;
 	
-	        String source = jsonToNode(
-	        	get(node.get("annotatedClass").get("links").get("ontology").asText())
-	        ).get("acronym").asText();
+	        String source
+	        	= JsonRequest.get(node.get("annotatedClass").get("links").get("ontology").asText(), api_key)
+	        	.get("acronym").asText();
 	        System.out.println("Found class: '" + leaf.label + "' in '" + source + "'.");
 	        
 	        nodes.add(leaf);
@@ -106,7 +101,7 @@ public class Extractor {
 	}
 	 
 	public void addParentsToNode(JsonNode json, OntClass cls) {
-		for (JsonNode parentJson : jsonToNode(get(json.get("links").get("parents").asText()))) {
+		for (JsonNode parentJson : JsonRequest.get(json.get("links").get("parents").asText(), api_key)) {
 			OntClass parentClass = createClass(new Node(parentJson));
 			cls.addSuperClass(parentClass);
 			
@@ -142,18 +137,6 @@ public class Extractor {
 		}
 		return null;
 	}
-	
-	private JsonNode jsonToNode(String json) {
-        JsonNode root = null;
-        try {
-            root = mapper.readTree(json);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return root;
-    }
 	
 	private void readConfiguration() throws FileNotFoundException, YamlException {
 		YamlReader reader = new YamlReader(new FileReader("settings.yml"));
@@ -198,43 +181,7 @@ public class Extractor {
 		OWLOntology ontology = manager.loadOntologyFromOntologyDocument(file);
 		
 		manager.saveOntology(ontology);
-	}	
-    
-	private String get(String urlToGet) {
-        URL url;
-        HttpURLConnection conn;
-        BufferedReader rd = null;
-        String line;
-        String result = "";
-        try {
-            url = new URL(urlToGet);
-            conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("GET");
-            conn.setRequestProperty("Authorization", "apikey token=" + api_key);
-            conn.setRequestProperty("Accept", "application/json");
-            
-            boolean retry = true;
-            
-            do {
-	            try {
-	            	rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-	            	retry = false;
-	            } catch (Exception e) {
-	            	System.err.println(e.getLocalizedMessage() + " - " + conn.getResponseMessage());
-	            	System.out.println("Waiting 5 seconds to try again...");
-	            	Thread.sleep(5000);
-	            }
-            } while (retry);
-	            
-            while ((line = rd.readLine()) != null) {
-                result += line;
-            }
-            rd.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return result;
-    }
+	}
     
     public DefaultMutableTreeNode getTreeNodeForClass(OntClass cls) {
     	DefaultMutableTreeNode node;

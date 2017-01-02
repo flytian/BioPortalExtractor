@@ -1,12 +1,11 @@
 package Scripts;
 
 import java.io.PrintWriter;
-
 import de.uni_leipzig.imise.BioPortalExtractor.OntologyParser.LifeOntologyParser.LifeItem;
 import de.uni_leipzig.imise.BioPortalExtractor.OntologyParser.LifeOntologyParser.LifePprjParser;
 
 public class LifeItemsToCsvExtractor {
-
+	
 	public static void main(String[] args) {
 		LifePprjParser parser = new LifePprjParser("H:/LIFE-Metadaten/life.pprj");
 		PrintWriter writer = null;
