@@ -27,7 +27,8 @@ public class LifePprjParser extends LifeOntologyParser {
 				try {
 					items.add(new LifeItem(
 						instance.getOwnSlotValue(nameSlot).toString(),
-						instance.getOwnSlotValue(descriptionSlot).toString()
+						instance.getOwnSlotValue(descriptionSlot).toString(),
+						null
 					));
 				} catch (Exception e) { }
 			}

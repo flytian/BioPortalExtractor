@@ -13,6 +13,9 @@ import javax.swing.tree.DefaultTreeModel;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.jena.ontology.OntClass;
 
+import com.esotericsoftware.yamlbeans.YamlException;
+import com.esotericsoftware.yamlbeans.YamlReader;
+
 import de.onto_med.bioportal_extractor.Extractor;
 import de.onto_med.bioportal_extractor.Node;
 import de.onto_med.ontology_parser.life.LifeItem;
@@ -32,6 +35,9 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.util.Map;
 import java.awt.event.ActionEvent;
 import javax.swing.JTextArea;
 import javax.swing.JTree;
@@ -56,6 +62,7 @@ public class View extends JFrame {
 	private JTree ontologyTree;
 	private JFrame lifeItemsFrame;
 	private LifeItemList lifeItemList;
+	private Map<String, String> configuration;
 
 	public static void main(String[] args) throws ClassNotFoundException, InstantiationException, IllegalAccessException, UnsupportedLookAndFeelException {
 		UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
@@ -78,7 +85,14 @@ public class View extends JFrame {
 		if (fileChooser.showOpenDialog(new JFrame()) != JFileChooser.APPROVE_OPTION)
 			System.exit(0);
 		
-		extractor = new Extractor();
+		configuration = readConfiguration();
+		
+		extractor = new Extractor(
+			configuration.get("api_key"),
+			configuration.get("iri"),
+			configuration.get("outputPath"),
+			configuration.get("ontologies")
+		);
 		
 		File file = fileChooser.getSelectedFile();
 		if (FilenameUtils.getExtension(file.getName()).equals("pprj")) {
@@ -233,6 +247,12 @@ public class View extends JFrame {
 		return model;
 	}
 	
+	@SuppressWarnings("unchecked")
+	private Map<String, String> readConfiguration() throws FileNotFoundException, YamlException {
+		YamlReader reader = new YamlReader(new FileReader("settings.yml"));
+		
+		return (Map<String, String>) reader.read();
+	}
 	
 	
 	
@@ -258,6 +278,9 @@ public class View extends JFrame {
 				for (Node node : list.getSelectedValuesList()) {
 					OntClass cls = extractor.createClass(node);
 					extractor.addOrigin(cls, parser.current().getId());
+					for (String related : parser.current().getRelated()) {
+						extractor.addOrigin(cls,  related);
+					}
 					extractor.addParentsToNode(node.json, cls);
 				}
 				
@@ -308,8 +331,6 @@ public class View extends JFrame {
 			
 			worker.execute();
 			dlgProgress.setVisible(true);
-			
-			
 			
 			/* hide dialog */
 			validate();

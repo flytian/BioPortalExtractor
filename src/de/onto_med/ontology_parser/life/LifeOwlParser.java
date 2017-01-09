@@ -2,9 +2,12 @@ package de.onto_med.ontology_parser.life;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Iterator;
+
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.io.XMLUtils;
 import org.semanticweb.owlapi.model.OWLDataProperty;
+import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
@@ -26,10 +29,19 @@ public class LifeOwlParser extends LifeOntologyParser {
 		
 		for (OWLNamedIndividual individual : ontology.getIndividualsInSignature()) {
 			try {
-				OWLDataProperty descriptionProperty = ontology.getDataPropertiesInSignature().iterator().next();
+				Iterator<OWLDataProperty> propertyIterator = ontology.getDataPropertiesInSignature().iterator();
+				OWLDataProperty descriptionProperty = propertyIterator.next();
+				OWLDataProperty relatedProperty = propertyIterator.next();
+
+				ArrayList<String> related = new ArrayList<String>();
+				for (OWLLiteral literal : EntitySearcher.getDataPropertyValues(individual, relatedProperty, ontology)) {
+					related.add(literal.getLiteral());
+				}
+				
 				items.add(new LifeItem(
 					XMLUtils.getNCNameSuffix(individual.getIRI().toString()),
-					EntitySearcher.getDataPropertyValues(individual, descriptionProperty, ontology).iterator().next().getLiteral()
+					EntitySearcher.getDataPropertyValues(individual, descriptionProperty, ontology).iterator().next().getLiteral(),
+					related
 				));
 			} catch (Exception e) { }
 		}

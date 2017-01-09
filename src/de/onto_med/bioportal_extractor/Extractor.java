@@ -1,60 +1,46 @@
 package de.onto_med.bioportal_extractor;
 
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
-import java.util.Map;
-
 import javax.swing.tree.DefaultMutableTreeNode;
 
 import org.apache.jena.ontology.AnnotationProperty;
 import org.apache.jena.ontology.OntClass;
 import org.apache.jena.ontology.OntModel;
-import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.util.FileManager;
-import org.semanticweb.owlapi.apibinding.OWLManager;
-import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
-import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 
-import com.esotericsoftware.yamlbeans.YamlException;
-import com.esotericsoftware.yamlbeans.YamlReader;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.Lists;
 
 import de.onto_med.JsonRequest;
+import de.onto_med.jenaapi_owlapi_integration.OntologyManager;
 
 public class Extractor {
 	
-	private String api_key, iri, outputPath, ontologies, rest_url;
+	private String api_key, iri, ontologies;
+	private String rest_url = "http://data.bioontology.org";
+	private OntologyManager manager;
     private OntModel model;
     private AnnotationProperty definition, synonym, origin;
 	private OntClass ignored;
     
 
-    public Extractor() {
-    	try {
-			readConfiguration();
-		} catch (Exception e) {
-			System.err.println("Error: Could not load 'settings.yml'! (" + e.getMessage() + ")");
-			System.exit(1);
-		}
+    public Extractor(String api_key, String iri, String outputPath, String ontologies) {
+    	this.api_key    = api_key;
+    	this.iri        = iri;
+    	this.ontologies = ontologies;
     	
-    	createOntology();
+    	manager = new OntologyManager(outputPath, iri);
+		model = manager.getModel();
+		
+    	createProperties();
     }
 	
 	public void saveOntology() throws OWLOntologyCreationException, OWLOntologyStorageException, FileNotFoundException {
-		File file = new File(outputPath);
-		FileOutputStream stream = new FileOutputStream(file);
-		model.setNsPrefix("", iri);
-		model.write(stream, "RDF/XML", null);
-		loadAndSaveWithOwlApi();
-		System.out.println("\nSaved ontologie in '" + file.getAbsolutePath() + "'.");
+		manager.save();
 	}
 	
 	public ArrayList<Node> extract(String text) {
@@ -138,28 +124,8 @@ public class Extractor {
 		return null;
 	}
 	
-	private void readConfiguration() throws FileNotFoundException, YamlException {
-		YamlReader reader = new YamlReader(new FileReader("settings.yml"));
-		@SuppressWarnings("unchecked")
-		Map<String, String> map = (Map<String, String>) reader.read();
-		api_key    = map.get("api_key");
-		iri        = map.get("iri");
-		outputPath = map.get("outputPath");
-		ontologies = map.get("ontologies");
-		rest_url   = map.get("bioportal_url");
-	}
 	
-	
-	private void createOntology() {
-		model = ModelFactory.createOntologyModel();
-		
-		if (new File(outputPath).exists()) {
-			System.out.println("Appending data to existing output file.");
-			model.read(FileManager.get().open(outputPath), null);
-		} else {
-			model.createOntology(iri);
-		}
-		
+	private void createProperties() {		
         definition = model.createAnnotationProperty(iri + "definition");
         synonym    = model.createAnnotationProperty(iri + "synonym");
         origin     = model.createAnnotationProperty(iri + "origin");
@@ -175,14 +141,6 @@ public class Extractor {
 		cls.addSuperClass(ignored);
 	}
 	
-	private void loadAndSaveWithOwlApi() throws OWLOntologyCreationException, OWLOntologyStorageException {
-		File file = new File(outputPath);
-		OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
-		OWLOntology ontology = manager.loadOntologyFromOntologyDocument(file);
-		
-		manager.saveOntology(ontology);
-	}
-    
     public DefaultMutableTreeNode getTreeNodeForClass(OntClass cls) {
     	DefaultMutableTreeNode node;
     	ArrayList<OntClass> classes;

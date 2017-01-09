@@ -13,5 +13,6 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="src" path="/JenaApi_OWLApi_Integration"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>
