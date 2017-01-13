@@ -12,7 +12,7 @@ public class AutomatedExtractionForTranslatedLifeItems {
 		try {
 			LifeOwlParser parser = new LifeOwlParser(args[0]);
 			Extractor extractor = new Extractor(
-				"",
+				"01766580-322b-48aa-997a-9bc4462e471d",
 				"http://imise.uni-leipzig.de/annotation.owl#",
 				"auto_annotation.owl",
 				"NCIT"
@@ -23,11 +23,15 @@ public class AutomatedExtractionForTranslatedLifeItems {
 				ArrayList<Node> nodes = extractor.extract(item.getDescription());
 				
 				if (nodes.isEmpty()) continue;
-				Node node = nodes.get(0);
 				
-				OntClass cls = extractor.createClass(node);
-				extractor.addOrigin(cls, item.getId());
-				extractor.addParentsToNode(node.json, cls);
+				if (nodes.size() == 1) {
+					Node node = nodes.get(0);
+					
+					
+					OntClass cls = extractor.createClass(node);
+					extractor.addOrigin(cls, item.getId());
+					extractor.addParentsToNode(node.json, cls);
+				}
 			}
 			
 			extractor.saveOntology();

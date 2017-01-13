@@ -65,6 +65,7 @@ public class Extractor {
 		ArrayList<Node> nodes = new ArrayList<Node>();
 		for (JsonNode node : rootNode) {
 	        JsonNode cls = JsonRequest.get(node.get("annotatedClass").get("links").get("self").asText(), api_key);
+	        if (cls == null) continue;
 	        Node leaf = new Node(cls);
 	        leaf.json = cls;
 	        	

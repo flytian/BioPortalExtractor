@@ -4,6 +4,8 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -22,17 +24,18 @@ import de.onto_med.Translator;
 
 public class LifeItemsToOwlConverter {
 
-	private static String iri = "http://imise.uni-leipzig.de/life#";
-	private static int maxItems = 50;
+	private static String iri    = "http://imise.uni-leipzig.de/life#";
+	private static int maxItems  = 150;
+	private static int maxLength = 5;
 	
 	
 	public static void main(String[] args) {
-		LifePprjParser parser = new LifePprjParser("H:/LIFE-Metadaten/life.pprj");
-		OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
-		OWLDataFactory factory = manager.getOWLDataFactory();
+		LifePprjParser parser       = new LifePprjParser("H:/LIFE-Metadaten/life.pprj");
+		OWLOntologyManager manager  = OWLManager.createOWLOntologyManager();
+		OWLDataFactory factory      = manager.getOWLDataFactory();
 		OWLDataProperty description = factory.getOWLDataProperty(IRI.create(iri + "description"));
-		OWLDataProperty related = factory.getOWLDataProperty(IRI.create(iri + "related"));
-		OWLOntology ontology = null;
+		OWLDataProperty related     = factory.getOWLDataProperty(IRI.create(iri + "related"));
+		OWLOntology ontology        = null;
 		
 		try {
 			ontology = manager.createOntology();
@@ -42,11 +45,25 @@ public class LifeItemsToOwlConverter {
 		
 		int counter = 0;
 		HashMap<String, IRI> cache = new HashMap<String, IRI>();
-		for (LifeItem item : parser.getItems()) {
-			counter++;
-			if (counter > maxItems) break;
+		
+		Comparator<LifeItem> comparator = new Comparator<LifeItem>() {
+			public int compare(LifeItem i1, LifeItem i2) {
+				return i1.getDescription().length() - i2.getDescription().length();
+			}
+		};
+		
+		ArrayList<LifeItem> items = parser.getItems();
+		items.sort(comparator);
+		
+		for (LifeItem item : items) {
+			if (item.getDescription().split(" +").length > maxLength
+				|| LifeItemFilter.isUseless(item)
+			) {
+				System.out.println("Skiped: " + item.getId() + " - '" + item.getDescription() + "'");
+				continue;
+			}
 			
-			if (item.getDescription().split(" +").length > 5) continue;
+			if (counter >= maxItems) break;
 			
 			String translatedDescription = Translator.translate(item.getDescription());
 			
@@ -54,6 +71,7 @@ public class LifeItemsToOwlConverter {
 				OWLNamedIndividual individual = factory.getOWLNamedIndividual(cache.get(translatedDescription));
 				OWLDataPropertyAssertionAxiom axiom = factory.getOWLDataPropertyAssertionAxiom(related, individual, item.getId());
 				manager.applyChange(new AddAxiom(ontology, axiom));
+				System.err.println(counter + ": " + translatedDescription + " allready in ontology");
 			} else {
 				OWLDataPropertyAssertionAxiom axiom = factory.getOWLDataPropertyAssertionAxiom(
 					description,
@@ -62,6 +80,8 @@ public class LifeItemsToOwlConverter {
 				);
 				manager.applyChange(new AddAxiom(ontology, axiom));
 				cache.put(translatedDescription, IRI.create(iri + item.getId()));
+				counter++;
+				System.out.println(counter + ": " + item.getDescription() + " -> " + translatedDescription);
 			}
 		}
 		

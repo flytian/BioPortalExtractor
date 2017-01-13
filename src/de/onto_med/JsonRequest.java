@@ -48,7 +48,7 @@ public class JsonRequest {
             conn.setRequestProperty("Accept", "application/json");
             
             boolean retry = true;
-            
+            int counter = 0;
             do {
 	            try {
 	            	rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
@@ -56,10 +56,15 @@ public class JsonRequest {
 	            } catch (Exception e) {
 	            	System.err.println(e.getLocalizedMessage() + " - " + conn.getResponseMessage());
 	            	System.out.println("Waiting 5 seconds to try again...");
+	            	counter++;
 	            	Thread.sleep(WAITING_TIME);
 	            }
-            } while (retry);
-	            
+            } while (retry && counter < 5);
+	        
+            if (rd == null) {
+            	return null;
+            }
+            
             while ((line = rd.readLine()) != null) {
                 result += line;
             }
