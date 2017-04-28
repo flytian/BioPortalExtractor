@@ -278,9 +278,6 @@ public class View extends JFrame {
 				for (Node node : list.getSelectedValuesList()) {
 					OntClass cls = extractor.createClass(node);
 					extractor.addOrigin(cls, parser.current().getId());
-					for (String related : parser.current().getRelated()) {
-						extractor.addOrigin(cls,  related);
-					}
 					extractor.addParentsToNode(node.json, cls);
 				}
 				

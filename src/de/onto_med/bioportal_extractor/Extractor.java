@@ -34,7 +34,7 @@ public class Extractor {
     	this.ontologies = ontologies;
     	
     	manager = new OntologyManager(outputPath, iri);
-		model = manager.getModel();
+		model   = manager.getModel();
 		
     	createProperties();
     }
