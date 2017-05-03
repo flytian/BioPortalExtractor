@@ -4,6 +4,8 @@ import java.io.FileNotFoundException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.List;
+
 import javax.swing.tree.DefaultMutableTreeNode;
 
 import org.apache.jena.ontology.AnnotationProperty;
@@ -117,12 +119,14 @@ public class Extractor {
 		return false;
 	}
 	
-	public OntClass getAnnotatedClass(String origin) {
+	public List<OntClass> getAnnotatedClasses(String origin) {
+		List<OntClass> list = new ArrayList<OntClass>();
+		
 		for (OntClass cls : Lists.newArrayList(model.listClasses())) {
 			if (cls.hasLiteral(this.origin, origin))
-				return cls;
+				list.add(cls);
 		}
-		return null;
+		return list;
 	}
 	
 	

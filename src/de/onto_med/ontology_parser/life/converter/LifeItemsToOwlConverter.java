@@ -1,4 +1,4 @@
-package de.onto_med.ontology_parser.life;
+package de.onto_med.ontology_parser.life.converter;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -21,6 +21,9 @@ import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 
 import de.onto_med.Translator;
+import de.onto_med.ontology_parser.life.LifeItem;
+import de.onto_med.ontology_parser.life.LifeItemFilter;
+import de.onto_med.ontology_parser.life.LifePprjParser;
 
 public class LifeItemsToOwlConverter {
 

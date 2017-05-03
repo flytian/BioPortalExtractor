@@ -37,6 +37,7 @@ import java.awt.event.MouseListener;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.util.List;
 import java.util.Map;
 import java.awt.event.ActionEvent;
 import javax.swing.JTextArea;
@@ -233,12 +234,15 @@ public class View extends JFrame {
 		DefaultListModel<LifeItem> model = new DefaultListModel<LifeItem>();
 		for (LifeItem item : parser.getItems()) {
 			LifeItem copy = item.clone();
-			OntClass cls = extractor.getAnnotatedClass(item.getId());
-			if (cls != null) {
+			List<OntClass> classes = extractor.getAnnotatedClasses(item.getId());
+			
+			for (OntClass cls : classes) {
 				if (cls.getLocalName().equals(copy.getId()))
-					copy.setDescription("<html><body style='background-color:yellow'>" + copy.toString() + " - IGNORED</body></html>");
-				else
-					copy.setDescription("<html><body style='background-color:green'>" + copy.toString() + " - ANNOTATED</body></html>");
+					copy.setStatus(LifeItem.IS_IGNORED);
+				else {
+					copy.setStatus(LifeItem.IS_ANNOTATED);
+					copy.addRelated(cls.getURI());
+				}
 			}
 			
 			model.addElement(copy);
@@ -278,6 +282,7 @@ public class View extends JFrame {
 				for (Node node : list.getSelectedValuesList()) {
 					OntClass cls = extractor.createClass(node);
 					extractor.addOrigin(cls, parser.current().getId());
+					parser.current().addRelated(node.id);
 					extractor.addParentsToNode(node.json, cls);
 				}
 				

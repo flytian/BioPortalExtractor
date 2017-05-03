@@ -22,13 +22,17 @@ public class LifeItemList extends JList<LifeItem> {
                 int index = list.locationToIndex(e.getPoint());
                 if (index > -1) {
                     LifeItem item = (LifeItem) model.getElementAt(index);
-                    list.setToolTipText(item.getDescription());
+                    list.setToolTipText(
+                    	"<html><body>" 
+                    	+ item.getDescription() 
+                    	+ (item.hasRelated() ? "<br>Related:<br>" + String.join("<br>", item.getRelated()) : "")
+                    	+ "</body></html>"
+                    );
                 }
             }
         });
     }
 
-    // Expose the getToolTipText event of our JList
     public String getToolTipText(MouseEvent e) {
         return super.getToolTipText();
     }
