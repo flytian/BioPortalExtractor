@@ -1,4 +1,4 @@
-package de.onto_med.bioportal_extractor.view;
+package de.onto_med.bioportal_extractor_gui.view;
 
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;

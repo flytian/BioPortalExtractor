@@ -1,4 +1,4 @@
-package de.onto_med.bioportal_extractor.view;
+package de.onto_med.bioportal_extractor_gui.view;
 
 import java.awt.BorderLayout;
 import java.awt.EventQueue;
@@ -16,12 +16,13 @@ import org.apache.jena.ontology.OntClass;
 import com.esotericsoftware.yamlbeans.YamlException;
 import com.esotericsoftware.yamlbeans.YamlReader;
 
-import de.onto_med.bioportal_extractor.Extractor;
+import de.onto_med.bioportal_extractor.NodeConverter;
+import de.onto_med.ontology_parser_gui.life.LifeItem;
+import de.onto_med.ontology_parser_gui.life.LifeOntologyParser;
+import de.onto_med.ontology_parser_gui.life.LifeOwlParser;
+import de.onto_med.ontology_parser_gui.life.LifePprjParser;
+import de.onto_med.bioportal_extractor.BioPortalExtractor;
 import de.onto_med.bioportal_extractor.Node;
-import de.onto_med.ontology_parser.life.LifeItem;
-import de.onto_med.ontology_parser.life.LifeOntologyParser;
-import de.onto_med.ontology_parser.life.LifeOwlParser;
-import de.onto_med.ontology_parser.life.LifePprjParser;
 
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -52,7 +53,8 @@ public class View extends JFrame {
 	
 	private static final long serialVersionUID = -8815936031219372775L;
 	private static LifeOntologyParser parser;
-	private static Extractor extractor;
+	private static BioPortalExtractor extractor;
+	private static NodeConverter converter;
 	
 	private JPanel contentPane;
 	private JTextArea txtTranslation;
@@ -88,11 +90,13 @@ public class View extends JFrame {
 		
 		configuration = readConfiguration();
 		
-		extractor = new Extractor(
+		extractor = new BioPortalExtractor(
 			configuration.get("api_key"),
-			configuration.get("iri"),
-			configuration.get("outputPath"),
 			configuration.get("ontologies")
+		);
+		converter = new NodeConverter(
+			configuration.get("iri"),
+			configuration.get("outputPath")
 		);
 		
 		File file = fileChooser.getSelectedFile();
@@ -214,7 +218,7 @@ public class View extends JFrame {
 		if (lifeItemsFrame.isVisible()) 
 			lifeItemList.setModel(getLIFEItemsListModel());
 		if (ontologyFrame.isVisible())
-			ontologyTree.setModel(new DefaultTreeModel(extractor.getTreeNodeForClass(null)));
+			ontologyTree.setModel(new DefaultTreeModel(converter.getTreeNodeForClass(null)));
 		lblCurrentItem.setText(parser.current().getDescription());
 	}
 	
@@ -234,7 +238,7 @@ public class View extends JFrame {
 		DefaultListModel<LifeItem> model = new DefaultListModel<LifeItem>();
 		for (LifeItem item : parser.getItems()) {
 			LifeItem copy = item.clone();
-			List<OntClass> classes = extractor.getAnnotatedClasses(item.getId());
+			List<OntClass> classes = converter.getAnnotatedClasses(item.getId());
 			
 			for (OntClass cls : classes) {
 				if (cls.getLocalName().equals(copy.getId()))
@@ -263,7 +267,7 @@ public class View extends JFrame {
 	private class SaveOntologyActionListener implements ActionListener {
 		public void actionPerformed(ActionEvent e) {
 			try {
-				extractor.saveOntology();
+				converter.saveOntology();
 				JOptionPane.showMessageDialog(new JFrame(), "Ontology saved. You can continue working on this ontology.");
 			} catch (Exception err) {
 				JOptionPane.showMessageDialog(new JFrame(), err.getLocalizedMessage());
@@ -280,10 +284,9 @@ public class View extends JFrame {
 			
 			try {
 				for (Node node : list.getSelectedValuesList()) {
-					OntClass cls = extractor.createClass(node);
-					extractor.addOrigin(cls, parser.current().getId());
+					OntClass cls = converter.createClass(node);
+					converter.addOrigin(cls, parser.current().getId());
 					parser.current().addRelated(node.id);
-					extractor.addParentsToNode(node.json, cls);
 				}
 				
 				parser.next();
@@ -317,7 +320,7 @@ public class View extends JFrame {
 					}
 					
 					DefaultListModel model = new DefaultListModel();
-					for (Node node : extractor.extract(text)) {
+					for (Node node : extractor.annotate(text)) {
 						model.addElement(node);
 					}
 					
@@ -343,7 +346,7 @@ public class View extends JFrame {
 		public void actionPerformed(ActionEvent e) {
 			do {
 				parser.next();
-			} while (parser.current() != null && extractor.isAnnotated(parser.current().getId()));
+			} while (parser.current() != null && converter.isAnnotated(parser.current().getId()));
 			reset();
 		}
 	}
@@ -357,7 +360,7 @@ public class View extends JFrame {
 	
 	private class ShowOntologyActionListener implements ActionListener {
 		public void actionPerformed(ActionEvent e) {
-			ontologyTree.setModel(new DefaultTreeModel(extractor.getTreeNodeForClass(null)));
+			ontologyTree.setModel(new DefaultTreeModel(converter.getTreeNodeForClass(null)));
 			ontologyFrame.setVisible(true);
 		}
 	}
@@ -370,7 +373,7 @@ public class View extends JFrame {
 			}
 				
 			Node node = new Node(parser.current().getId(), parser.current().getDescription());
-			extractor.ignoreClass(node);
+			converter.ignoreClass(node);
 			parser.next();
 			reset();
 		}

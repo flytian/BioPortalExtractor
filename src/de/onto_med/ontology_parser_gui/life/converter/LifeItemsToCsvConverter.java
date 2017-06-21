@@ -1,9 +1,9 @@
-package de.onto_med.ontology_parser.life.converter;
+package de.onto_med.ontology_parser_gui.life.converter;
 
 import java.io.PrintWriter;
 
-import de.onto_med.ontology_parser.life.LifeItem;
-import de.onto_med.ontology_parser.life.LifePprjParser;
+import de.onto_med.ontology_parser_gui.life.LifeItem;
+import de.onto_med.ontology_parser_gui.life.LifePprjParser;
 
 public class LifeItemsToCsvConverter {
 	

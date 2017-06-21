@@ -1,10 +1,11 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>BioPortalExtractor</groupId>
-  <artifactId>BioPortalExtractor</artifactId>
+  <groupId>de.onto_med</groupId>
+  <artifactId>bioportal_extractor_gui</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <properties>
     <protege.version>3.5.1.1</protege.version>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
   <build>
     <sourceDirectory>src</sourceDirectory>
@@ -40,21 +41,15 @@
       <artifactId>yamlbeans</artifactId>
       <version>1.06</version>
     </dependency>
-  	<dependency>
-  	  <groupId>org.apache.jena</groupId>
-      <artifactId>apache-jena-libs</artifactId>
-      <type>pom</type>
-      <version>3.0.1</version>
-    </dependency>
-    <dependency>
-      <groupId>net.sourceforge.owlapi</groupId>
-      <artifactId>owlapi-distribution</artifactId>
-      <version>4.2.7</version>
-    </dependency>
     <dependency>
       <groupId>edu.stanford.protege</groupId>
       <artifactId>protege</artifactId>
       <version>${protege.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>de.onto_med</groupId>
+      <artifactId>bioportal_extractor</artifactId>
+      <version>0.0.1-SNAPSHOT</version>
     </dependency>
   </dependencies>
 </project>

@@ -1,4 +1,4 @@
-package de.onto_med.ontology_parser.life;
+package de.onto_med.ontology_parser_gui.life;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -20,6 +20,7 @@ public class LifeOwlParser extends LifeOntologyParser {
 	 * @param ontologyPath path to pprj file
 	 * @throws OWLOntologyCreationException 
 	 */
+	@SuppressWarnings("deprecation")
 	public LifeOwlParser(String ontologyPath) throws OWLOntologyCreationException {
 		File file = new File(ontologyPath);
 		OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
@@ -34,7 +35,7 @@ public class LifeOwlParser extends LifeOntologyParser {
 				OWLDataProperty relatedProperty = propertyIterator.next();
 
 				ArrayList<String> related = new ArrayList<String>();
-				for (OWLLiteral literal : EntitySearcher.getDataPropertyValues(individual, relatedProperty, ontology)) {
+				for (OWLLiteral literal : EntitySearcher.getDataPropertyValues(individual, relatedProperty, ontology).toArray(size -> new OWLLiteral[size])) {
 					related.add(literal.getLiteral());
 				}
 				

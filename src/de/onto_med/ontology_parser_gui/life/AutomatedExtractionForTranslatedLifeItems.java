@@ -1,9 +1,11 @@
-package de.onto_med.ontology_parser.life;
+package de.onto_med.ontology_parser_gui.life;
 
-import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.jena.ontology.OntClass;
-import de.onto_med.bioportal_extractor.Extractor;
+
+import de.onto_med.bioportal_extractor.BioPortalExtractor;
+import de.onto_med.bioportal_extractor.NodeConverter;
 import de.onto_med.bioportal_extractor.Node;
 
 public class AutomatedExtractionForTranslatedLifeItems {
@@ -11,30 +13,30 @@ public class AutomatedExtractionForTranslatedLifeItems {
 	public static void main(String[] args) {
 		try {
 			LifeOwlParser parser = new LifeOwlParser(args[0]);
-			Extractor extractor = new Extractor(
+			BioPortalExtractor extractor = new BioPortalExtractor(
 				"01766580-322b-48aa-997a-9bc4462e471d",
-				"http://imise.uni-leipzig.de/annotation.owl#",
-				"auto_annotation.owl",
 				"NCIT"
+			);
+			NodeConverter converter = new NodeConverter(
+				"http://onto_med.de/annotation",
+				"auto_annotation.owl"
 			);
 			
 			LifeItem item;
 			while ((item = parser.next()) != null) {
-				ArrayList<Node> nodes = extractor.extract(item.getDescription());
+				List<Node> nodes = extractor.annotate(item.getDescription());
 				
 				if (nodes.isEmpty()) continue;
 				
 				if (nodes.size() == 1) {
 					Node node = nodes.get(0);
 					
-					
-					OntClass cls = extractor.createClass(node);
-					extractor.addOrigin(cls, item.getId());
-					extractor.addParentsToNode(node.json, cls);
+					OntClass cls = converter.createClass(node);
+					converter.addOrigin(cls, item.getId());
 				}
 			}
 			
-			extractor.saveOntology();
+			converter.saveOntology();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
