@@ -1,5 +1,6 @@
-package de.onto_med.ontology_parser_gui.life;
+package de.onto_med.bioportal_extractor_gui.life;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -7,7 +8,13 @@ public abstract class LifeOntologyParser {
 	protected ArrayList<LifeItem> items;
 	protected LifeItem curItem;
 	protected Iterator<LifeItem> iterator;
+	protected File file;
+	protected String path;
 	
+	public LifeOntologyParser(String path) {
+		this.path = path;
+		file = new File(path);
+	}
 	
 	public LifeItem current() {
 		return curItem;
@@ -33,4 +40,6 @@ public abstract class LifeOntologyParser {
 					break;
 		}
 	}
+
+	public abstract void load() throws Exception;
 }

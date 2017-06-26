@@ -1,8 +1,6 @@
 package de.onto_med.bioportal_extractor_gui.view;
 
 import java.awt.BorderLayout;
-import java.awt.EventQueue;
-
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
@@ -11,22 +9,21 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.tree.DefaultTreeModel;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.ontology.OntClass;
-
 import com.esotericsoftware.yamlbeans.YamlException;
 import com.esotericsoftware.yamlbeans.YamlReader;
 
 import de.onto_med.bioportal_extractor.NodeConverter;
-import de.onto_med.ontology_parser_gui.life.LifeItem;
-import de.onto_med.ontology_parser_gui.life.LifeOntologyParser;
-import de.onto_med.ontology_parser_gui.life.LifeOwlParser;
-import de.onto_med.ontology_parser_gui.life.LifePprjParser;
+import de.onto_med.bioportal_extractor_gui.life.LifeItem;
+import de.onto_med.bioportal_extractor_gui.life.LifeOntologyParser;
+import de.onto_med.bioportal_extractor_gui.life.LifeOwlParser;
+import de.onto_med.bioportal_extractor_gui.life.LifePprjParser;
 import de.onto_med.bioportal_extractor.BioPortalExtractor;
 import de.onto_med.bioportal_extractor.Node;
 
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-import java.awt.GridLayout;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -38,196 +35,212 @@ import java.awt.event.MouseListener;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.awt.event.ActionEvent;
 import javax.swing.JTextArea;
 import javax.swing.JTree;
 import javax.swing.SwingWorker;
 import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.JScrollPane;
-import javax.swing.border.TitledBorder;
+import java.awt.GridBagLayout;
+import java.awt.GridBagConstraints;
+import java.awt.Insets;
+import java.awt.GridLayout;
+import java.awt.FlowLayout;
 
 public class View extends JFrame {
 	
 	private static final long serialVersionUID = -8815936031219372775L;
-	private static LifeOntologyParser parser;
-	private static BioPortalExtractor extractor;
-	private static NodeConverter converter;
+	
+	private static LifeOntologyParser parser    = null;
+	private static BioPortalExtractor extractor = null;
+	private static NodeConverter converter      = null;
 	
 	private JPanel contentPane;
 	private JTextArea txtTranslation;
 	private JTextArea lblCurrentItem;
 	private JPanel panelResult;
 	private NodeList list;
-	private JFrame ontologyFrame;
 	private JTree ontologyTree;
-	private JFrame lifeItemsFrame;
 	private LifeItemList lifeItemList;
+	private DefaultListModel<LifeItem> lifeItemListModel;
 	private Map<String, String> configuration;
 
-	public static void main(String[] args) throws ClassNotFoundException, InstantiationException, IllegalAccessException, UnsupportedLookAndFeelException {
-		UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
-		
-		EventQueue.invokeLater(new Runnable() {
-			public void run() {
-				try {
-					View frame = new View();
-					frame.setVisible(true);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		});
-	}
 
 	public View() throws Exception {
-		JFileChooser fileChooser = new JFileChooser();
-		fileChooser.setFileFilter(new FileNameExtensionFilter("Ontology", "pprj,owl".split(",")));
-		if (fileChooser.showOpenDialog(new JFrame()) != JFileChooser.APPROVE_OPTION)
-			System.exit(0);
-		
 		configuration = readConfiguration();
 		
 		extractor = new BioPortalExtractor(
 			configuration.get("api_key"),
 			configuration.get("ontologies")
 		);
-		converter = new NodeConverter(
-			configuration.get("iri"),
-			configuration.get("outputPath")
-		);
 		
-		File file = fileChooser.getSelectedFile();
-		if (FilenameUtils.getExtension(file.getName()).equals("pprj")) {
-			parser = new LifePprjParser(file.getAbsolutePath());
-		} else if (FilenameUtils.getExtension(file.getName()).equals("owl")) {
-			parser = new LifeOwlParser(file.getAbsolutePath());
-		} else {
-			System.exit(0);
-		}
-		
-		setTitle("BioPortalExtractor");
+		setTitle("BioPortal Extractor");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 480, 334);
+		// setBounds(100, 100, 613, 548);
+		setSize(700, 600);
+		setLocationRelativeTo(null);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 0, 5));
 		setContentPane(contentPane);
-		contentPane.setLayout(null);
+		contentPane.setLayout(new BorderLayout(0, 0));
 		
-		JPanel panelInput = new JPanel();
-		panelInput.setBorder(new TitledBorder(null, "", TitledBorder.LEADING, TitledBorder.TOP, null, null));
-		panelInput.setBounds(5, 11, 449, 112);
-		contentPane.add(panelInput);
-		panelInput.setLayout(null);
+		JPanel filePanel = new JPanel();
+		contentPane.add(filePanel, BorderLayout.NORTH);
 		
-		JLabel label1 = new JLabel("Current LIFE-Item:");
-		label1.setBounds(10, 11, 108, 14);
-		panelInput.add(label1);
+		JButton btnOpenItemOntology = new JButton("Open Item Ontology...", UIManager.getIcon("FileView.directoryIcon"));
+		btnOpenItemOntology.addActionListener(new OpenItemOntologyActionListener());
+		filePanel.add(btnOpenItemOntology);
 		
-		txtTranslation = new JTextArea();
-		txtTranslation.setWrapStyleWord(true);
-		txtTranslation.setRows(2);
-		txtTranslation.setBounds(118, 44, 321, 32);
-		panelInput.add(txtTranslation);
-		txtTranslation.setColumns(10);
+		JButton btnOpenOutputOntology = new JButton("Open Output Ontology...", UIManager.getIcon("FileView.directoryIcon"));
+		btnOpenOutputOntology.addActionListener(new OpenOutputOntologyActionListener());
+		filePanel.add(btnOpenOutputOntology);
 		
-		JLabel label2 = new JLabel("Translation:");
-		label2.setBounds(10, 47, 108, 14);
-		panelInput.add(label2);
+		JButton btnSaveOntology = new JButton("Save Ontology", UIManager.getIcon("FileView.floppyDriveIcon"));
+		filePanel.add(btnSaveOntology);
+		btnSaveOntology.addActionListener(new SaveOntologyActionListener());
+		
+		JPanel contentPanel = new JPanel();
+		contentPane.add(contentPanel, BorderLayout.CENTER);
+		contentPanel.setLayout(new BorderLayout(0, 0));
+		
+		JPanel inputPanel = new JPanel();
+		inputPanel.setBorder(null);
+		contentPanel.add(inputPanel, BorderLayout.NORTH);
+		
+		GridBagLayout gbl_inputPanel = new GridBagLayout();
+		gbl_inputPanel.columnWidths  = new int[] {100, 200};
+		gbl_inputPanel.rowHeights    = new int[] {50, 50, 0};
+		gbl_inputPanel.columnWeights = new double[]{0.0, 1.0};
+		gbl_inputPanel.rowWeights    = new double[]{0.0, 0.0, 1.0};
+		inputPanel.setLayout(gbl_inputPanel);
+		
+		JLabel label1 = new JLabel("Current Item:");
+		GridBagConstraints gbc_label1 = new GridBagConstraints();
+		gbc_label1.anchor = GridBagConstraints.NORTHWEST;
+		gbc_label1.insets = new Insets(0, 0, 5, 5);
+		gbc_label1.gridx  = 0;
+		gbc_label1.gridy  = 0;
+		inputPanel.add(label1, gbc_label1);
 		
 		lblCurrentItem = new JTextArea("");
+		GridBagConstraints gbc_lblCurrentItem = new GridBagConstraints();
+		gbc_lblCurrentItem.fill   = GridBagConstraints.BOTH;
+		gbc_lblCurrentItem.insets = new Insets(0, 0, 5, 0);
+		gbc_lblCurrentItem.gridx  = 1;
+		gbc_lblCurrentItem.gridy  = 0;
+		inputPanel.add(lblCurrentItem, gbc_lblCurrentItem);
 		lblCurrentItem.setLineWrap(true);
 		lblCurrentItem.setRows(2);
 		lblCurrentItem.setEditable(false);
-		lblCurrentItem.setBounds(118, 11, 321, 32);
-		panelInput.add(lblCurrentItem);
+		
+		JLabel label2 = new JLabel("Translation:");
+		GridBagConstraints gbc_label2 = new GridBagConstraints();
+		gbc_label2.anchor = GridBagConstraints.NORTHWEST;
+		gbc_label2.insets = new Insets(0, 0, 5, 5);
+		gbc_label2.gridx  = 0;
+		gbc_label2.gridy  = 1;
+		inputPanel.add(label2, gbc_label2);
+		
+		txtTranslation = new JTextArea();
+		GridBagConstraints gbc_txtTranslation = new GridBagConstraints();
+		gbc_txtTranslation.fill   = GridBagConstraints.BOTH;
+		gbc_txtTranslation.insets = new Insets(0, 0, 5, 0);
+		gbc_txtTranslation.gridx  = 1;
+		gbc_txtTranslation.gridy  = 1;
+		inputPanel.add(txtTranslation, gbc_txtTranslation);
+		txtTranslation.setWrapStyleWord(true);
+		txtTranslation.setRows(2);
+		txtTranslation.setColumns(10);
+		
+		JPanel splitPane = new JPanel();
+		splitPane.setBorder(null);
+		GridBagConstraints gbc_splitPane = new GridBagConstraints();
+		gbc_splitPane.anchor = GridBagConstraints.WEST;
+		gbc_splitPane.gridx  = 1;
+		gbc_splitPane.gridy  = 2;
+		inputPanel.add(splitPane, gbc_splitPane);
 		
 		JButton btnNextItem = new JButton("Next Item");
-		btnNextItem.addActionListener(new NextItemActionListener());
-		btnNextItem.setBounds(331, 78, 108, 23);
-		panelInput.add(btnNextItem);
+		splitPane.add(btnNextItem);
 		
 		JButton btnExtractClasses = new JButton("Extract Classes");
-		btnExtractClasses.addActionListener(new ExtractClassesActionListener());
-		btnExtractClasses.setBounds(196, 78, 125, 23);
-		panelInput.add(btnExtractClasses);
+		splitPane.add(btnExtractClasses);
 		
-		JButton btnNewButton = new JButton("Ignore Item");
-		btnNewButton.addActionListener(new IgnoreItemActionListener());
-		btnNewButton.setBounds(64, 78, 120, 23);
-		panelInput.add(btnNewButton);
-		
-		JButton btnUseSelectedClasses = new JButton("Use Selected Classes");
-		btnUseSelectedClasses.addActionListener(new UseSelectedClassesActionListener());
-		btnUseSelectedClasses.setBounds(288, 226, 164, 23);
-		contentPane.add(btnUseSelectedClasses);
-		
-		JButton btnSaveOntology = new JButton("Save Ontology");
-		btnSaveOntology.addActionListener(new SaveOntologyActionListener());
-		btnSaveOntology.setBounds(326, 263, 128, 23);
-		contentPane.add(btnSaveOntology);
+		JPanel resultPanel = new JPanel();
+		contentPanel.add(resultPanel);
+		resultPanel.setLayout(new GridLayout(0, 2, 0, 0));
 		
 		panelResult = new JPanel();
-		panelResult.setBounds(5, 123, 449, 94);
-		contentPane.add(panelResult);
-		panelResult.setLayout(new GridLayout(0, 1, 0, 0));
+		resultPanel.add(panelResult);
+		panelResult.setLayout(new BorderLayout(0, 0));
 		
 		list = new NodeList();
 		list.setVisibleRowCount(5);
-				
-		JScrollPane scrollPane = new JScrollPane(list);
-		panelResult.add(scrollPane);
 		
-		JButton btnShowOntology = new JButton("Show Ontology");
-		btnShowOntology.addActionListener(new ShowOntologyActionListener());
-		btnShowOntology.setBounds(5, 263, 125, 23);
-		contentPane.add(btnShowOntology);
+		JScrollPane resultScrollPane = new JScrollPane(list);
+		panelResult.add(resultScrollPane, BorderLayout.CENTER);
 		
-		JButton btnShowItems = new JButton("Show Items");
-		btnShowItems.setBounds(5, 226, 125, 23);
-		contentPane.add(btnShowItems);
-		btnShowItems.addActionListener(new ShowItemsActionListener());
+		JPanel resultButtonsPanel = new JPanel();
+		FlowLayout fl_resultButtonsPanel = (FlowLayout) resultButtonsPanel.getLayout();
+		fl_resultButtonsPanel.setVgap(0);
+		fl_resultButtonsPanel.setHgap(0);
+		panelResult.add(resultButtonsPanel, BorderLayout.SOUTH);
 		
-		ontologyFrame = new JFrame("Extracted Ontology");
-		ontologyFrame.setBounds(580, 100, 480, 600);
+		JButton btnNewButton = new JButton("Ignore Item");
+		resultButtonsPanel.add(btnNewButton);
 		
-		ontologyTree = new JTree();
-		JScrollPane ontologyScrollPane = new JScrollPane(ontologyTree);
-		ontologyFrame.getContentPane().add(ontologyScrollPane);
-		ontologyFrame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-		ontologyFrame.setVisible(false);
+		JButton btnUseSelectedClasses = new JButton("Use Selected Classes");
+		resultButtonsPanel.add(btnUseSelectedClasses);
 		
-		lifeItemsFrame = new JFrame("LIFE Items");
-		lifeItemsFrame.setBounds(1060, 100, 480, 600);
+		JPanel itemsPanel = new JPanel();
+		resultPanel.add(itemsPanel);
 		
 		lifeItemList = new LifeItemList();
 		lifeItemList.addMouseListener(new LifeItemsListMouseListener());
-		JScrollPane lifeItemsScrollPane = new JScrollPane(lifeItemList);
+		itemsPanel.setLayout(new GridLayout(0, 1, 0, 0));
+		JScrollPane itemsScrollPane = new JScrollPane(lifeItemList);
+		itemsPanel.add(itemsScrollPane);
 		
-		lifeItemsFrame.getContentPane().add(lifeItemsScrollPane);
-		lifeItemsFrame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-		lifeItemsFrame.setVisible(false);
+		
+		ontologyTree = new JTree();
+		JScrollPane ontologyScrollPane = new JScrollPane(ontologyTree);
+		itemsPanel.add(ontologyScrollPane);
+		btnUseSelectedClasses.addActionListener(new UseSelectedClassesActionListener());
+		btnNewButton.addActionListener(new IgnoreItemActionListener());
+		btnExtractClasses.addActionListener(new ExtractClassesActionListener());
+		btnNextItem.addActionListener(new NextItemActionListener());
+		
+		reload();
+		reset();
 	}
 	
 	private void reset() {
 		lblCurrentItem.setText("");
 		txtTranslation.setText("");
 		list.setModel(new DefaultListModel<Node>());
-		if (lifeItemsFrame.isVisible()) 
-			lifeItemList.setModel(getLIFEItemsListModel());
-		if (ontologyFrame.isVisible())
+		lifeItemList.repaint();
+		if (parser != null && parser.current() != null)
+			lblCurrentItem.setText(parser.current().getDescription());
+	}
+	
+	private void reload() {
+		if (parser != null) {
+			lifeItemListModel = getLIFEItemsListModel();
+			lifeItemList.setModel(lifeItemListModel);
+		}
+		if (converter != null)
 			ontologyTree.setModel(new DefaultTreeModel(converter.getTreeNodeForClass(null)));
-		lblCurrentItem.setText(parser.current().getDescription());
+		else ontologyTree.setModel(new DefaultTreeModel(null));
 	}
 	
 	private String getSearchString() {
 		String text = null;
 		
-		if (txtTranslation.getText() != null && !txtTranslation.getText().equals("")) {
+		if (StringUtils.isNoneBlank(txtTranslation.getText())) {
 			text = txtTranslation.getText();
-		} else if (lblCurrentItem.getText() != null && !lblCurrentItem.getText().equals("")) {
+		} else if (StringUtils.isNoneBlank(lblCurrentItem.getText())) {
 			text = lblCurrentItem.getText();
 		}
 		
@@ -237,19 +250,18 @@ public class View extends JFrame {
 	private DefaultListModel<LifeItem> getLIFEItemsListModel() {
 		DefaultListModel<LifeItem> model = new DefaultListModel<LifeItem>();
 		for (LifeItem item : parser.getItems()) {
-			LifeItem copy = item.clone();
-			List<OntClass> classes = converter.getAnnotatedClasses(item.getId());
-			
-			for (OntClass cls : classes) {
-				if (cls.getLocalName().equals(copy.getId()))
-					copy.setStatus(LifeItem.IS_IGNORED);
-				else {
-					copy.setStatus(LifeItem.IS_ANNOTATED);
-					copy.addRelated(cls.getURI());
+			if (converter != null) {
+				for (OntClass cls : converter.getClassesOfOrigin(item.getId())) {
+					if (cls.getLocalName().equals(item.getId()))
+						item.setStatus(LifeItem.IS_IGNORED);
+					else {
+						item.setStatus(LifeItem.IS_ANNOTATED);
+						item.addRelated(cls.getURI());
+					}
 				}
 			}
 			
-			model.addElement(copy);
+			model.addElement(item);
 		}
 		
 		return model;
@@ -266,24 +278,32 @@ public class View extends JFrame {
 	
 	private class SaveOntologyActionListener implements ActionListener {
 		public void actionPerformed(ActionEvent e) {
+			if (converter == null) {
+				JOptionPane.showMessageDialog(new JFrame(), "Please specify an Output Ontology!");
+				return;
+			}
 			try {
 				converter.saveOntology();
 				JOptionPane.showMessageDialog(new JFrame(), "Ontology saved. You can continue working on this ontology.");
 			} catch (Exception err) {
-				JOptionPane.showMessageDialog(new JFrame(), err.getLocalizedMessage());
+				JOptionPane.showMessageDialog(new JFrame(), err.getMessage());
 			}
 		}
 	}
 	
 	private class UseSelectedClassesActionListener implements ActionListener {
 		public void actionPerformed(ActionEvent e) {
-			if (parser.current() == null) {
-				JOptionPane.showMessageDialog(new JFrame(), "No LIFE item for annotation selected!");
+			if (parser == null || parser.current() == null) {
+				JOptionPane.showMessageDialog(new JFrame(), "No item for annotation selected!");
+				return;
+			} else if (converter == null) {
+				JOptionPane.showMessageDialog(new JFrame(), "No Output Ontology for storing of annotations selected!");
 				return;
 			}
 			
 			try {
 				for (Node node : list.getSelectedValuesList()) {
+					parser.current().setStatus(LifeItem.IS_ANNOTATED);
 					OntClass cls = converter.createClass(node);
 					converter.addOrigin(cls, parser.current().getId());
 					parser.current().addRelated(node.id);
@@ -298,82 +318,80 @@ public class View extends JFrame {
 	}
 	
 	private class ExtractClassesActionListener implements ActionListener {
-		@SuppressWarnings({ "unchecked", "rawtypes" })
 		public void actionPerformed(ActionEvent e) {
-			final JDialog dlgProgress = new JDialog(new JFrame(), "Please wait...", true);
-			JProgressBar pbProgress = new JProgressBar(0, 100);
-			pbProgress.setIndeterminate(true);
-			
-			dlgProgress.add(BorderLayout.CENTER, pbProgress);
-			dlgProgress.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
-			dlgProgress.setSize(300, 60);
-			dlgProgress.setBounds(200, 300, 300, 60);
-			
-			SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+			doInBackground("Searching for classes...", new Callable<Object>() {
 				@Override
-				protected Void doInBackground() throws Exception {
+				public Object call() throws Exception {
 					String text = getSearchString();
-					
-					if (text == null || text.equals("")) {
-						JOptionPane.showMessageDialog(new JFrame(), "No LIFE item to search for!");
-						return null;
+					if (StringUtils.isBlank(text)) {
+						JOptionPane.showMessageDialog(new JFrame(), "No item to search for!");
+					} else {
+						DefaultListModel<Node> model = new DefaultListModel<Node>();
+						extractor.annotate(text).forEach(e -> model.addElement(e));
+						list.setModel(model);
 					}
-					
-					DefaultListModel model = new DefaultListModel();
-					for (Node node : extractor.annotate(text)) {
-						model.addElement(node);
-					}
-					
-					list.setModel(model);
 					return null;
 				}
-				
-				@Override
-				protected void done() {
-					dlgProgress.dispose();
-				}
-			};
-			
-			worker.execute();
-			dlgProgress.setVisible(true);
-			
-			/* hide dialog */
-			validate();
+			});
 		}
+	}
+	
+	private <T> void doInBackground(String dialog, Callable<T> function) {
+		final JDialog dlgProgress = new JDialog(new JFrame(), dialog, true);
+		JProgressBar pbProgress = new JProgressBar(0, 100);
+		pbProgress.setIndeterminate(true);
+			
+		dlgProgress.getContentPane().add(BorderLayout.CENTER, pbProgress);
+		dlgProgress.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+		dlgProgress.setSize(300, 60);
+		dlgProgress.setBounds(250, 300, 300, 60);
+			
+		SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+			@Override
+			protected Void doInBackground() throws Exception {
+				function.call();
+				return null;
+			}
+				
+			@Override
+			protected void done() {
+				dlgProgress.dispose();
+			}
+		};
+			
+		worker.execute();
+		dlgProgress.setVisible(true);
+			
+		/* hide dialog */
+		validate();
 	}
 	
 	private class NextItemActionListener implements ActionListener {
 		public void actionPerformed(ActionEvent e) {
+			if (parser == null) {
+				JOptionPane.showMessageDialog(new JFrame(), "Please specifiy an Item Ontology!");
+				return;
+			}
+			
 			do {
 				parser.next();
-			} while (parser.current() != null && converter.isAnnotated(parser.current().getId()));
+			} while (parser.current() != null && (converter != null && converter.isAnnotatedOrigin(parser.current().getId())));
 			reset();
-		}
-	}
-	
-	private class ShowItemsActionListener implements ActionListener {
-		public void actionPerformed(ActionEvent e) {
-			lifeItemList.setModel(getLIFEItemsListModel());
-			lifeItemsFrame.setVisible(true);
-		}
-	}
-	
-	private class ShowOntologyActionListener implements ActionListener {
-		public void actionPerformed(ActionEvent e) {
-			ontologyTree.setModel(new DefaultTreeModel(converter.getTreeNodeForClass(null)));
-			ontologyFrame.setVisible(true);
 		}
 	}
 
 	private class IgnoreItemActionListener implements ActionListener {
 		public void actionPerformed(ActionEvent e) {
-			if (parser.current() == null) {
+			if (parser == null || parser.current() == null) {
 				JOptionPane.showMessageDialog(new JFrame(), "Nothing to ignore!");
+				return;
+			} else if (converter == null) {
+				JOptionPane.showMessageDialog(new JFrame(), "No Output Ontology for storing of annotations selected!");
 				return;
 			}
 				
 			Node node = new Node(parser.current().getId(), parser.current().getDescription());
-			converter.ignoreClass(node);
+			converter.createIgnoredClass(node);
 			parser.next();
 			reset();
 		}
@@ -389,11 +407,47 @@ public class View extends JFrame {
 		}
 
 		public void mousePressed(MouseEvent e) {}
-
 		public void mouseReleased(MouseEvent e) {}
-
 		public void mouseEntered(MouseEvent e) {}
-
 		public void mouseExited(MouseEvent e) {}
+	}
+	
+	private class OpenItemOntologyActionListener implements ActionListener {
+		public void actionPerformed(ActionEvent e) {
+			JFileChooser fileChooser = new JFileChooser();
+			fileChooser.setFileFilter(new FileNameExtensionFilter("Ontology", "pprj,owl".split(",")));
+			if (fileChooser.showOpenDialog(new JFrame()) != JFileChooser.APPROVE_OPTION) return;
+			
+			File file = fileChooser.getSelectedFile();
+			if (FilenameUtils.getExtension(file.getName()).equals("pprj")) {
+				parser = new LifePprjParser(file.getAbsolutePath());
+			} else if (FilenameUtils.getExtension(file.getName()).equals("owl")) {
+				parser = new LifeOwlParser(file.getAbsolutePath());
+			} else {
+				return;
+			}
+			doInBackground("Loading Item Ontology...", new Callable<Object>() {
+				@Override
+				public DefaultListModel<LifeItem> call() throws Exception {
+					parser.load();
+					reload();
+					return null;
+				}
+			});
+		}
+	}
+	
+	private class OpenOutputOntologyActionListener implements ActionListener {
+		public void actionPerformed(ActionEvent e) {
+			JFileChooser fileChooser = new JFileChooser();
+			fileChooser.setFileFilter(new FileNameExtensionFilter("Ontology", "owl"));
+			if (fileChooser.showOpenDialog(new JFrame()) != JFileChooser.APPROVE_OPTION) return;
+			
+			converter = new NodeConverter(
+				configuration.get("iri"),
+				StringUtils.defaultString(fileChooser.getSelectedFile().getAbsolutePath(), configuration.get("outputPath"))
+			);
+			reload();
+		}
 	}
 }

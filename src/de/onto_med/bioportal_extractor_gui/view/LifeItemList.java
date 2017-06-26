@@ -6,7 +6,7 @@ import java.awt.event.MouseMotionAdapter;
 import javax.swing.JList;
 import javax.swing.ListModel;
 
-import de.onto_med.ontology_parser_gui.life.LifeItem;
+import de.onto_med.bioportal_extractor_gui.life.LifeItem;
 
 public class LifeItemList extends JList<LifeItem> {
 	private static final long serialVersionUID = 3456447653090821395L;

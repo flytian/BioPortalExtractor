@@ -1,4 +1,4 @@
-package de.onto_med.ontology_parser_gui.life;
+package de.onto_med.bioportal_extractor_gui.life;
 
 import org.apache.commons.lang3.StringUtils;
 
