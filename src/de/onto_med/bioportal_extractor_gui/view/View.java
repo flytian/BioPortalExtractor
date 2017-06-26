@@ -223,6 +223,9 @@ public class View extends JFrame {
 		lifeItemList.repaint();
 		if (parser != null && parser.current() != null)
 			lblCurrentItem.setText(parser.current().getDescription());
+		if (converter != null)
+			ontologyTree.setModel(new DefaultTreeModel(converter.getTreeNodeForClass(null)));
+		else ontologyTree.setModel(new DefaultTreeModel(null));
 	}
 	
 	private void reload() {
@@ -230,9 +233,7 @@ public class View extends JFrame {
 			lifeItemListModel = getLIFEItemsListModel();
 			lifeItemList.setModel(lifeItemListModel);
 		}
-		if (converter != null)
-			ontologyTree.setModel(new DefaultTreeModel(converter.getTreeNodeForClass(null)));
-		else ontologyTree.setModel(new DefaultTreeModel(null));
+		
 	}
 	
 	private String getSearchString() {
@@ -344,7 +345,7 @@ public class View extends JFrame {
 		dlgProgress.getContentPane().add(BorderLayout.CENTER, pbProgress);
 		dlgProgress.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
 		dlgProgress.setSize(300, 60);
-		dlgProgress.setBounds(250, 300, 300, 60);
+		dlgProgress.setLocationRelativeTo(null);
 			
 		SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
 			@Override
