@@ -162,6 +162,10 @@ public class View extends JFrame {
 		gbc_splitPane.gridy  = 2;
 		inputPanel.add(splitPane, gbc_splitPane);
 		
+		JButton btnPreviousItem = new JButton("Previous Item");
+		btnPreviousItem.addActionListener(new PreviousItemActionListener());
+		splitPane.add(btnPreviousItem);
+		
 		JButton btnNextItem = new JButton("Next Item");
 		splitPane.add(btnNextItem);
 		
@@ -374,9 +378,19 @@ public class View extends JFrame {
 				return;
 			}
 			
-			do {
-				parser.next();
-			} while (parser.current() != null && (converter != null && converter.isAnnotatedOrigin(parser.current().getId())));
+			parser.next();
+			reset();
+		}
+	}
+	
+	private class PreviousItemActionListener implements ActionListener {
+		public void actionPerformed(ActionEvent e) {
+			if (parser == null) {
+				JOptionPane.showMessageDialog(new JFrame(),  "Please specify an Item Ontology!");
+				return;
+			}
+			
+			parser.previous();
 			reset();
 		}
 	}

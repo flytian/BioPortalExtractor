@@ -36,6 +36,6 @@ public class LifePprjParser extends LifeOntologyParser {
 			});
 		});
 		
-		iterator = items.iterator();
+		iterator = items.listIterator();
 	}
 }

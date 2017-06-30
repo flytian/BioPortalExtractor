@@ -37,6 +37,6 @@ public class LifeOwlParser extends LifeOntologyParser {
 			));
 		});
 		
-		iterator = items.iterator();
+		iterator = items.listIterator();
 	}
 }
