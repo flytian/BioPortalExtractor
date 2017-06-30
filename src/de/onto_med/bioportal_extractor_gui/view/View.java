@@ -48,6 +48,7 @@ import java.awt.GridBagConstraints;
 import java.awt.Insets;
 import java.awt.GridLayout;
 import java.awt.FlowLayout;
+import javax.swing.JSplitPane;
 
 public class View extends JFrame {
 	
@@ -78,7 +79,6 @@ public class View extends JFrame {
 		
 		setTitle("BioPortal Extractor");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		// setBounds(100, 100, 613, 548);
 		setSize(700, 600);
 		setLocationRelativeTo(null);
 		contentPane = new JPanel();
@@ -172,12 +172,20 @@ public class View extends JFrame {
 		JButton btnExtractClasses = new JButton("Extract Classes");
 		splitPane.add(btnExtractClasses);
 		
-		JPanel resultPanel = new JPanel();
-		contentPanel.add(resultPanel);
-		resultPanel.setLayout(new GridLayout(0, 2, 0, 0));
+		JPanel itemsPanel = new JPanel();
+		
+		lifeItemList = new LifeItemList();
+		lifeItemList.addMouseListener(new LifeItemsListMouseListener());
+		itemsPanel.setLayout(new GridLayout(0, 1, 0, 0));
+		JScrollPane itemsScrollPane = new JScrollPane(lifeItemList);
+		itemsPanel.add(itemsScrollPane);
+		
+		
+		ontologyTree = new JTree();
+		JScrollPane ontologyScrollPane = new JScrollPane(ontologyTree);
+		itemsPanel.add(ontologyScrollPane);
 		
 		panelResult = new JPanel();
-		resultPanel.add(panelResult);
 		panelResult.setLayout(new BorderLayout(0, 0));
 		
 		list = new NodeList();
@@ -198,19 +206,9 @@ public class View extends JFrame {
 		JButton btnUseSelectedClasses = new JButton("Use Selected Classes");
 		resultButtonsPanel.add(btnUseSelectedClasses);
 		
-		JPanel itemsPanel = new JPanel();
-		resultPanel.add(itemsPanel);
+		JSplitPane resultsPanel = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panelResult, itemsPanel);
+		contentPanel.add(resultsPanel, BorderLayout.CENTER);
 		
-		lifeItemList = new LifeItemList();
-		lifeItemList.addMouseListener(new LifeItemsListMouseListener());
-		itemsPanel.setLayout(new GridLayout(0, 1, 0, 0));
-		JScrollPane itemsScrollPane = new JScrollPane(lifeItemList);
-		itemsPanel.add(itemsScrollPane);
-		
-		
-		ontologyTree = new JTree();
-		JScrollPane ontologyScrollPane = new JScrollPane(ontologyTree);
-		itemsPanel.add(ontologyScrollPane);
 		btnUseSelectedClasses.addActionListener(new UseSelectedClassesActionListener());
 		btnNewButton.addActionListener(new IgnoreItemActionListener());
 		btnExtractClasses.addActionListener(new ExtractClassesActionListener());
