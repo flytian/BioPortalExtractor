@@ -1,9 +1,7 @@
 package de.onto_med.bioportal_extractor_gui.view;
 
 import java.awt.BorderLayout;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.JProgressBar;
+import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.tree.DefaultTreeModel;
@@ -22,13 +20,6 @@ import de.onto_med.bioportal_extractor_gui.life.LifePprjParser;
 import de.onto_med.bioportal_extractor.BioPortalExtractor;
 import de.onto_med.bioportal_extractor.Node;
 
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.DefaultListModel;
-import javax.swing.JButton;
-import javax.swing.JDialog;
-import javax.swing.JFileChooser;
-
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -38,17 +29,11 @@ import java.io.FileReader;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.awt.event.ActionEvent;
-import javax.swing.JTextArea;
-import javax.swing.JTree;
-import javax.swing.SwingWorker;
-import javax.swing.UIManager;
-import javax.swing.JScrollPane;
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
 import java.awt.GridLayout;
 import java.awt.FlowLayout;
-import javax.swing.JSplitPane;
 
 public class View extends JFrame {
 	
@@ -78,7 +63,7 @@ public class View extends JFrame {
 		);
 		
 		setTitle("BioPortal Extractor");
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 		setSize(700, 600);
 		setLocationRelativeTo(null);
 		contentPane = new JPanel();
@@ -221,7 +206,7 @@ public class View extends JFrame {
 	private void reset() {
 		lblCurrentItem.setText("");
 		txtTranslation.setText("");
-		list.setModel(new DefaultListModel<Node>());
+		list.setModel(new DefaultListModel<>());
 		lifeItemList.repaint();
 		if (parser != null && parser.current() != null)
 			lblCurrentItem.setText(parser.current().getDescription());
@@ -251,7 +236,7 @@ public class View extends JFrame {
 	}
 	
 	private DefaultListModel<LifeItem> getLIFEItemsListModel() {
-		DefaultListModel<LifeItem> model = new DefaultListModel<LifeItem>();
+		DefaultListModel<LifeItem> model = new DefaultListModel<>();
 		for (LifeItem item : parser.getItems()) {
 			if (converter != null) {
 				for (OntClass cls : converter.getClassesOfOrigin(item.getId())) {
@@ -322,19 +307,16 @@ public class View extends JFrame {
 	
 	private class ExtractClassesActionListener implements ActionListener {
 		public void actionPerformed(ActionEvent e) {
-			doInBackground("Searching for classes...", new Callable<Object>() {
-				@Override
-				public Object call() throws Exception {
-					String text = getSearchString();
-					if (StringUtils.isBlank(text)) {
-						JOptionPane.showMessageDialog(new JFrame(), "No item to search for!");
-					} else {
-						DefaultListModel<Node> model = new DefaultListModel<Node>();
-						extractor.annotate(text).forEach(e -> model.addElement(e));
-						list.setModel(model);
-					}
-					return null;
+			doInBackground("Searching for classes...", () -> {
+				String text = getSearchString();
+				if (StringUtils.isBlank(text)) {
+					JOptionPane.showMessageDialog(new JFrame(), "No item to search for!");
+				} else {
+					DefaultListModel<Node> model = new DefaultListModel<>();
+					extractor.annotate(text).forEach(model::addElement);
+					list.setModel(model);
 				}
+				return null;
 			});
 		}
 	}
@@ -439,13 +421,10 @@ public class View extends JFrame {
 			} else {
 				return;
 			}
-			doInBackground("Loading Item Ontology...", new Callable<Object>() {
-				@Override
-				public DefaultListModel<LifeItem> call() throws Exception {
-					parser.load();
-					reload();
-					return null;
-				}
+			doInBackground("Loading Item Ontology...", () -> {
+				parser.load();
+				reload();
+				return null;
 			});
 		}
 	}

@@ -4,7 +4,7 @@
   <artifactId>bioportal_extractor_gui</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <properties>
-    <protege.version>3.5.1.1</protege.version>
+    <protege.version>3.5.1</protege.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
   <build>

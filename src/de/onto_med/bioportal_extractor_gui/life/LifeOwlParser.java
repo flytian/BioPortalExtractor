@@ -19,13 +19,13 @@ public class LifeOwlParser extends LifeOntologyParser {
 		OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
 		OWLOntology ontology       = manager.loadOntologyFromOntologyDocument(file);
 		
-		items = new ArrayList<LifeItem>();
+		items = new ArrayList<>();
 		ontology.individualsInSignature().parallel().forEach(individual -> {
 			Iterator<OWLDataProperty> propertyIterator = ontology.dataPropertiesInSignature().iterator();
 			OWLDataProperty descriptionProperty        = propertyIterator.next();
 			OWLDataProperty relatedProperty            = propertyIterator.next();
 	
-			ArrayList<String> related = new ArrayList<String>();
+			ArrayList<String> related = new ArrayList<>();
 			EntitySearcher.getDataPropertyValues(individual, relatedProperty, ontology).parallel().forEach(
 				literal -> related.add(literal.getLiteral())
 			);

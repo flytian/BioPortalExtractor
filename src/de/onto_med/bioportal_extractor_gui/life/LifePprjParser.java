@@ -23,18 +23,16 @@ public class LifePprjParser extends LifeOntologyParser {
 		Slot descriptionSlot = kb.getSlot("description");
 		Slot nameSlot        = kb.getSlot("name");	
 		
-		items = new ArrayList<LifeItem>();
+		items = new ArrayList<>();
 		
-		((Collection<Cls>) superClass.getSubclasses()).forEach(cls -> {
-			cls.getInstances().forEach(instance -> {
-				try {
-					items.add(new LifeItem(
-						instance.getOwnSlotValue(nameSlot).toString(),
-						instance.getOwnSlotValue(descriptionSlot).toString()
-					));
-				} catch (Exception e) { }
-			});
-		});
+		((Collection<Cls>) superClass.getSubclasses()).forEach(cls -> cls.getInstances().forEach(instance -> {
+			try {
+				items.add(new LifeItem(
+					instance.getOwnSlotValue(nameSlot).toString(),
+					instance.getOwnSlotValue(descriptionSlot).toString()
+				));
+			} catch (Exception ignored) { }
+		}));
 		
 		iterator = items.listIterator();
 	}

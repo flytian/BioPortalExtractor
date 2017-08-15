@@ -27,46 +27,43 @@ import de.onto_med.bioportal_extractor_gui.life.LifePprjParser;
 
 public class LifeItemsToOwlConverter {
 
-	private static String iri    = "http://imise.uni-leipzig.de/life#";
-	private static int maxItems  = 150;
-	private static int maxLength = 5;
+	private static final String IRI_STRING = "http://imise.uni-leipzig.de/life#";
+	private static final int MAX_ITEMS     = 150;
+	private static final int MAX_LENGTH    = 5;
 	
 	
 	public static void main(String[] args) {
 		LifePprjParser parser       = new LifePprjParser("H:/LIFE-Metadaten/life.pprj");
 		OWLOntologyManager manager  = OWLManager.createOWLOntologyManager();
 		OWLDataFactory factory      = manager.getOWLDataFactory();
-		OWLDataProperty description = factory.getOWLDataProperty(IRI.create(iri + "description"));
-		OWLDataProperty related     = factory.getOWLDataProperty(IRI.create(iri + "related"));
-		OWLOntology ontology        = null;
+		OWLDataProperty description = factory.getOWLDataProperty(IRI.create(IRI_STRING + "description"));
+		OWLDataProperty related     = factory.getOWLDataProperty(IRI.create(IRI_STRING + "related"));
+		OWLOntology ontology;
 		
 		try {
 			ontology = manager.createOntology();
 		} catch (OWLOntologyCreationException e1) {
 			e1.printStackTrace();
+			return;
 		}
 		
 		int counter = 0;
-		HashMap<String, IRI> cache = new HashMap<String, IRI>();
+		HashMap<String, IRI> cache = new HashMap<>();
 		
-		Comparator<LifeItem> comparator = new Comparator<LifeItem>() {
-			public int compare(LifeItem i1, LifeItem i2) {
-				return i1.getDescription().length() - i2.getDescription().length();
-			}
-		};
+		Comparator<LifeItem> comparator = Comparator.comparingInt(i -> i.getDescription().length());
 		
 		ArrayList<LifeItem> items = parser.getItems();
 		items.sort(comparator);
 		
 		for (LifeItem item : items) {
-			if (item.getDescription().split(" +").length > maxLength
+			if (item.getDescription().split(" +").length > MAX_LENGTH
 				|| LifeItemFilter.isUseless(item)
 			) {
 				System.out.println("Skiped: " + item.getId() + " - '" + item.getDescription() + "'");
 				continue;
 			}
 			
-			if (counter >= maxItems) break;
+			if (counter >= MAX_ITEMS) break;
 			
 			String translatedDescription = Translator.translate(item.getDescription());
 			
@@ -78,11 +75,11 @@ public class LifeItemsToOwlConverter {
 			} else {
 				OWLDataPropertyAssertionAxiom axiom = factory.getOWLDataPropertyAssertionAxiom(
 					description,
-					factory.getOWLNamedIndividual(IRI.create(iri + item.getId())),
+					factory.getOWLNamedIndividual(IRI.create(IRI_STRING + item.getId())),
 					translatedDescription
 				);
 				manager.applyChange(new AddAxiom(ontology, axiom));
-				cache.put(translatedDescription, IRI.create(iri + item.getId()));
+				cache.put(translatedDescription, IRI.create(IRI_STRING + item.getId()));
 				counter++;
 				System.out.println(counter + ": " + item.getDescription() + " -> " + translatedDescription);
 			}
@@ -91,9 +88,7 @@ public class LifeItemsToOwlConverter {
 		
 		try {
 			manager.saveOntology(ontology, new BufferedOutputStream(new FileOutputStream(new File("condensed_LifeOntology.owl"))));
-		} catch (OWLOntologyStorageException e) {
-			e.printStackTrace();
-		} catch (FileNotFoundException e) {
+		} catch (OWLOntologyStorageException | FileNotFoundException e) {
 			e.printStackTrace();
 		}
 	}

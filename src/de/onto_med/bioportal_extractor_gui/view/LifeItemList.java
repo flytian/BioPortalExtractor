@@ -21,7 +21,7 @@ public class LifeItemList extends JList<LifeItem> {
                 ListModel<LifeItem> model = list.getModel();
                 int index = list.locationToIndex(e.getPoint());
                 if (index > -1) {
-                    LifeItem item = (LifeItem) model.getElementAt(index);
+                    LifeItem item = model.getElementAt(index);
                     list.setToolTipText(
                     	"<html><body>" 
                     	+ item.getDescription() 
