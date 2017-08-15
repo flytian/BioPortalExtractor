@@ -5,4 +5,8 @@
 *.lck
 catalog-*.xml
 /bin/
-/target/
+.idea
+*.iml
+.settings
+.project
+.classpath
